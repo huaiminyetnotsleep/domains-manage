@@ -1,15 +1,14 @@
+import { unstable_cache } from 'next/cache'
+
 import { mapSite } from '@/lib/mappers/site'
 import { mockSites } from '@/lib/mock/sites'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { Site, SiteFormValues, SiteListQuery, SiteRow, PaginatedSites, FavoriteSite } from '@/types/site'
 
-export async function getActiveSites(): Promise<Site[]> {
-  if (!isSupabaseConfigured()) {
-    return mockSites.filter((s) => s.isActive)
-  }
-
-  try {
+// 站点全量数据用于筛选下拉和详情页，走 tag 缓存；站点增删改/启停时通过 revalidateTag('sites') 失效
+const getActiveSitesCached = unstable_cache(
+  async (): Promise<Site[]> => {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase
       .from('sites')
@@ -19,6 +18,18 @@ export async function getActiveSites(): Promise<Site[]> {
 
     if (error) throw new Error(error.message)
     return (data ?? []).map((row) => mapSite(row as SiteRow))
+  },
+  ['active-sites'],
+  { tags: ['sites'], revalidate: 300 },
+)
+
+export async function getActiveSites(): Promise<Site[]> {
+  if (!isSupabaseConfigured()) {
+    return mockSites.filter((s) => s.isActive)
+  }
+
+  try {
+    return await getActiveSitesCached()
   } catch (error) {
     console.error('Failed to load sites from Supabase, using mock data.', error)
     return mockSites.filter((s) => s.isActive)
@@ -74,12 +85,8 @@ export async function getSites(query: SiteListQuery): Promise<PaginatedSites> {
   }
 }
 
-export async function getAllSites(): Promise<Site[]> {
-  if (!isSupabaseConfigured()) {
-    return mockSites
-  }
-
-  try {
+const getAllSitesCached = unstable_cache(
+  async (): Promise<Site[]> => {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase
       .from('sites')
@@ -88,6 +95,18 @@ export async function getAllSites(): Promise<Site[]> {
 
     if (error) throw new Error(error.message)
     return (data ?? []).map((row) => mapSite(row as SiteRow))
+  },
+  ['all-sites'],
+  { tags: ['sites'], revalidate: 300 },
+)
+
+export async function getAllSites(): Promise<Site[]> {
+  if (!isSupabaseConfigured()) {
+    return mockSites
+  }
+
+  try {
+    return await getAllSitesCached()
   } catch (error) {
     console.error('Failed to load sites from Supabase, using mock data.', error)
     return mockSites

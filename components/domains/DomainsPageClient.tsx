@@ -26,6 +26,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { DEFAULT_DOMAIN_SORT_BY, DEFAULT_DOMAIN_SORT_ORDER, type Domain, type DomainDialogMode, type DomainFilters, type PaginatedDomains } from '@/types/domain'
 import type { DomainSuffixOption } from '@/lib/domainSuffix'
 import type { AccountLookup } from '@/lib/data/accounts'
@@ -39,6 +40,7 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [isFiltering, startFiltering] = useTransition()
   const { spinning, refresh } = useRefreshWithSpin()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<DomainDialogMode>('create')
@@ -124,7 +126,8 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
     else params.delete('pageSize')
 
     setSelectedDomainIds([])
-    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname)
+    // 包在 transition 里：请求期间保留当前表格和筛选条件，仅做进行中反馈
+    startFiltering(() => router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname))
   }
 
   const handleSelectDomain = (domainId: string, checked: boolean) => {
@@ -231,7 +234,7 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
         onFiltersChange={(filters) => updateSearchParams(filters)}
         onToggleColumn={handleToggleColumn}
         onAdd={() => openDomainDialog('create')}
-        refreshing={spinning}
+        refreshing={spinning || isFiltering}
         onRefresh={() => {
           setSelectedDomainIds([])
           refresh()
@@ -243,7 +246,7 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
       />
 
       {/* Desktop: Table */}
-      <div className="hidden min-h-0 flex-1 md:flex md:flex-col">
+      <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
         <DomainTable
           domains={domains}
           linkSites={linkSites}
@@ -262,7 +265,7 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
       </div>
 
       {/* Mobile: Card list */}
-      <div className="flex min-h-0 flex-1 flex-col md:hidden">
+      <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
         <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
           <div className="min-h-0 flex-1 overflow-auto p-3">
             {domains.length === 0 ? (

@@ -3,7 +3,7 @@
 import { format } from 'date-fns'
 import { Loader2, Play, RefreshCw } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import {
@@ -76,6 +76,7 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
   const searchParams = useSearchParams()
   const { spinning, refresh } = useRefreshWithSpin()
   const [runningJob, setRunningJob] = useState<RunnableJobKey | null>(null)
+  const [isFiltering, startFiltering] = useTransition()
 
   const updateSearchParams = (nextPage = 1, nextPageSize = paginatedRuns.pageSize) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -86,7 +87,8 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
     if (nextPageSize !== 10) params.set('pageSize', String(nextPageSize))
     else params.delete('pageSize')
 
-    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname)
+    // 包在 transition 里：请求期间保留当前列表，仅做进行中反馈
+    startFiltering(() => router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname))
   }
 
   const paginationItems = buildPaginationItems(paginatedRuns.page, paginatedRuns.totalPages)
@@ -202,8 +204,8 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
             ))}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || Boolean(runningJob)} aria-label="刷新">
-                  <RefreshCw size={16} className={spinning ? 'animate-spin' : ''} />
+                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering || Boolean(runningJob)} aria-label="刷新">
+                  <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>刷新</TooltipContent>
@@ -211,7 +213,7 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
           </div>
         </div>
 
-        <div className="hidden min-h-0 flex-1 md:flex md:flex-col">
+        <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
           {paginatedRuns.items.length === 0 ? (
             <EmptyState
               title="暂无执行记录"
@@ -259,7 +261,7 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
           )}
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col md:hidden">
+        <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
           {paginatedRuns.items.length === 0 ? (
             <EmptyState
               title="暂无执行记录"

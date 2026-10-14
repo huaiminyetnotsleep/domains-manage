@@ -33,6 +33,7 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { EMAIL_PROVIDER_LABELS, type Account, type AccountFilters, type EmailProvider, type PaginatedAccounts, type SiteEntry } from '@/types/account'
 import { isEmail } from '@/schemas/accountSchemas'
 import type { Site } from '@/types/site'
@@ -68,6 +69,7 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
   const [deletingAccount, setDeletingAccount] = useState<Account | null>(null)
   const [siteAccount, setSiteAccount] = useState<Account | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isFiltering, startFiltering] = useTransition()
   const [keywordInput, setKeywordInput] = useState(initialFilters.keyword)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
   const { spinning, refresh } = useRefreshWithSpin()
@@ -115,7 +117,8 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
     if (nextPageSize !== 10) params.set('pageSize', String(nextPageSize))
     else params.delete('pageSize')
 
-    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname)
+    // 包在 transition 里：请求期间保留当前列表和筛选条件，仅做进行中反馈
+    startFiltering(() => router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname))
   }
 
   const handleToggleActive = (accountId: string, checked: boolean) => {
@@ -270,8 +273,8 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning} aria-label="刷新">
-                  <RefreshCw size={16} className={spinning ? 'animate-spin' : ''} />
+                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering} aria-label="刷新">
+                  <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -287,7 +290,7 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
       </div>
 
       {/* Desktop: Table */}
-      <div className="hidden min-h-0 flex-1 md:flex md:flex-col">
+      <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
         {accounts.length === 0 ? (
           <EmptyState
             title="暂无账号数据"
@@ -385,7 +388,7 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
       </div>
 
       {/* Mobile: Card list */}
-      <div className="flex min-h-0 flex-1 flex-col md:hidden">
+      <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
         {accounts.length === 0 ? (
           <EmptyState
             title="暂无账号数据"

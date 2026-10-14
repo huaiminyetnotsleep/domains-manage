@@ -1,3 +1,5 @@
+import { unstable_cache } from 'next/cache'
+
 import { mapAccount, normalizeAccountIdentifier, normalizeAccountSites } from '@/lib/mappers/account'
 import { mockAccounts } from '@/lib/mock/accounts'
 import { mockSites } from '@/lib/mock/sites'
@@ -60,12 +62,9 @@ export async function getActiveAccounts() {
   }
 }
 
-export async function getAllAccounts() {
-  if (!isSupabaseConfigured()) {
-    return mockAccounts
-  }
-
-  try {
+// 账号全量数据用于筛选下拉和详情页，走 tag 缓存；账号增删改时通过 revalidateTag('accounts') 失效
+const getAllAccountsCached = unstable_cache(
+  async () => {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase
       .from('accounts')
@@ -74,6 +73,18 @@ export async function getAllAccounts() {
 
     if (error) throw new Error(error.message)
     return (data ?? []).map((row) => mapAccount(row as AccountRow))
+  },
+  ['all-accounts'],
+  { tags: ['accounts'], revalidate: 300 },
+)
+
+export async function getAllAccounts() {
+  if (!isSupabaseConfigured()) {
+    return mockAccounts
+  }
+
+  try {
+    return await getAllAccountsCached()
   } catch (error) {
     console.error('Failed to load accounts from Supabase, using mock data.', error)
     return mockAccounts
@@ -347,17 +358,9 @@ export type UsedSite = {
   name: string
 }
 
-export async function getUsedSites(): Promise<UsedSite[]> {
-  const extract = (accounts: Account[]) => {
-    const siteNamesById = new Map(mockSites.map((site) => [site.id, site.name]))
-    return [...new Set(accounts.flatMap((a) => a.sites.map((e) => e.site)))].sort().map((id) => ({ id, name: siteNamesById.get(id) ?? id }))
-  }
-
-  if (!isSupabaseConfigured()) {
-    return extract(mockAccounts)
-  }
-
-  try {
+// 已用站点列表依赖 accounts.sites 和 sites 表名，两个 tag 任一变更都失效
+const getUsedSitesCached = unstable_cache(
+  async (): Promise<UsedSite[]> => {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase
       .from('accounts')
@@ -378,6 +381,23 @@ export async function getUsedSites(): Promise<UsedSite[]> {
 
     const siteNamesById = new Map((sitesResult.data ?? []).map((site) => [site.id, site.name]))
     return siteIds.map((id) => ({ id, name: siteNamesById.get(id) ?? id }))
+  },
+  ['used-sites'],
+  { tags: ['accounts', 'sites'], revalidate: 300 },
+)
+
+export async function getUsedSites(): Promise<UsedSite[]> {
+  const extract = (accounts: Account[]) => {
+    const siteNamesById = new Map(mockSites.map((site) => [site.id, site.name]))
+    return [...new Set(accounts.flatMap((a) => a.sites.map((e) => e.site)))].sort().map((id) => ({ id, name: siteNamesById.get(id) ?? id }))
+  }
+
+  if (!isSupabaseConfigured()) {
+    return extract(mockAccounts)
+  }
+
+  try {
+    return await getUsedSitesCached()
   } catch (error) {
     console.error('Failed to load sites from Supabase, using mock data.', error)
     return extract(mockAccounts)

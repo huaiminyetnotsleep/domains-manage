@@ -1,6 +1,7 @@
 'use client'
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Globe, KeyRound, LayoutGrid, RefreshCw, TriangleAlert } from 'lucide-react'
 
 import { AccountProviderChart, AccountSiteChart, AccountReuseChart, AccountRiskCard } from '@/components/dashboard/AccountCharts'
@@ -65,20 +66,22 @@ type DashboardPageClientProps = {
 }
 
 export function DashboardPageClient(props: DashboardPageClientProps) {
-  const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const activeTab = parseDashboardTab(searchParams.get('tab'))
+  // 三个 tab 的数据已全部由服务端传入，本地切换即可，无需再触发服务端请求
+  const [activeTab, setActiveTab] = useState(() => parseDashboardTab(searchParams.get('tab')))
   const { spinning, refresh } = useRefreshWithSpin()
 
   const handleTabChange = (nextTab: string) => {
     if (!isDashboardTab(nextTab) || nextTab === activeTab) return
 
+    setActiveTab(nextTab)
+
     const params = new URLSearchParams(searchParams.toString())
     if (nextTab === 'domains') params.delete('tab')
     else params.set('tab', nextTab)
 
-    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname)
+    const pathname = window.location.pathname
+    window.history.replaceState(window.history.state, '', params.toString() ? `${pathname}?${params.toString()}` : pathname)
   }
 
   return (

@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 
 import { requireAccess } from '@/lib/auth/access-server'
 import {
@@ -32,6 +32,8 @@ export async function saveNotificationRulesAction(values: {
   }
 
   await saveNotificationRuleSettings(parsed.data)
+  // expiryDays 等规则参与 dashboard 统计，联动失效 settings tag 缓存
+  updateTag('settings')
   revalidatePath('/settings')
 }
 

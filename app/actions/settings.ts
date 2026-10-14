@@ -1,7 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
+import { after } from 'next/server'
 
 import { requireAccess } from '@/lib/auth/access-server'
 import { buildSettingsUpdateDetail } from '@/lib/activity-log-detail'
@@ -36,7 +37,7 @@ export async function updateProjectTitlesAction(title: string, subtitle: string,
     upsertSetting(SETTINGS_KEYS.PROJECT_ICON, finalIcon),
   ])
 
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     eventKey: 'settings.critical_changed',
     category: 'settings',
     action: 'update',
@@ -51,8 +52,9 @@ export async function updateProjectTitlesAction(title: string, subtitle: string,
       subtitle: trimmedSubtitle,
       icon: finalIcon,
     }),
-  })
+  }))
 
+  updateTag('settings')
   revalidatePath('/', 'layout')
   revalidatePath('/logs')
 }

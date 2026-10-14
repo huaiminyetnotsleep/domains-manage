@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 
 import { verifyAccessKey } from '@/lib/auth/access'
 import { clearAccessSession, createAccessSession } from '@/lib/auth/access-server'
@@ -19,7 +20,7 @@ export async function loginWithAccessKeyAction(secret: string) {
   const isValid = await verifyAccessKey(value)
 
   if (!isValid) {
-    await tryEmitEvent({
+    after(() => tryEmitEvent({
       category: 'auth',
       action: 'login_failed',
       resourceType: 'auth',
@@ -29,12 +30,12 @@ export async function loginWithAccessKeyAction(secret: string) {
       requestContext,
       severity: 'critical',
       result: 'failure',
-    })
+    }))
     throw new Error('访问秘钥不正确')
   }
 
   await createAccessSession()
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'auth',
     action: 'login',
     resourceType: 'auth',
@@ -43,7 +44,7 @@ export async function loginWithAccessKeyAction(secret: string) {
     detail: buildAuthActivityDetail(requestContext),
     requestContext,
     result: 'success',
-  })
+  }))
   revalidatePath('/logs')
 }
 
@@ -51,7 +52,7 @@ export async function logoutAction() {
   const requestContext = getActivityRequestContext(await headers())
 
   await clearAccessSession()
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'auth',
     action: 'logout',
     resourceType: 'auth',
@@ -60,6 +61,6 @@ export async function logoutAction() {
     detail: buildAuthActivityDetail(requestContext),
     requestContext,
     result: 'success',
-  })
+  }))
   revalidatePath('/logs')
 }

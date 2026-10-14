@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { format, addDays as dfnsAddDays } from 'date-fns'
+import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 
 import { getNotificationRuleSettings } from '@/lib/data/settings'
@@ -117,16 +118,25 @@ export async function getDomains(query: DomainListQuery, expiryDays?: number): P
   }
 }
 
+// 全量域名名单只用于后缀下拉选项，走 tag 缓存避免每次渲染全表扫描；域名增删改时通过 revalidateTag('domains') 失效
+const readAllDomainNamesCached = unstable_cache(
+  async (): Promise<string[]> => {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase.from('domains').select('name')
+
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row) => row.name).filter((name): name is string => Boolean(name))
+  },
+  ['all-domain-names'],
+  { tags: ['domains'] },
+)
+
 const readAllDomainNames = cache(async (): Promise<string[]> => {
   if (!isSupabaseConfigured()) {
     return mockDomains.map((domain) => domain.name)
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase.from('domains').select('name')
-
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => row.name).filter((name): name is string => Boolean(name))
+  return readAllDomainNamesCached()
 })
 
 export async function listAllDomainNames(): Promise<string[]> {

@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns'
 import { ClipboardList, RefreshCw } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { EmptyState } from '@/components/common/EmptyState'
@@ -54,6 +54,7 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
   const searchParams = useSearchParams()
   const [keywordInput, setKeywordInput] = useState(initialFilters.keyword)
   const [selectedLog, setSelectedLog] = useState<ActivityLogListItem | null>(null)
+  const [isFiltering, startFiltering] = useTransition()
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
   const { spinning, refresh } = useRefreshWithSpin()
 
@@ -87,7 +88,8 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
     if (nextPageSize !== 10) params.set('pageSize', String(nextPageSize))
     else params.delete('pageSize')
 
-    router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname)
+    // 包在 transition 里：请求期间保留当前列表和筛选条件，仅做进行中反馈
+    startFiltering(() => router.replace(params.toString() ? `${pathname}?${params.toString()}` : pathname))
   }
 
   const paginationItems = buildPaginationItems(paginatedLogs.page, paginatedLogs.totalPages)
@@ -208,8 +210,8 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
             </div>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning} aria-label="刷新">
-                  <RefreshCw size={16} className={spinning ? 'animate-spin' : ''} />
+                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering} aria-label="刷新">
+                  <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>刷新</TooltipContent>
@@ -218,7 +220,7 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
         </CardContent>
       </Card>
 
-      <div className="hidden min-h-0 flex-1 md:flex md:flex-col">
+      <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
         {paginatedLogs.items.length === 0 ? (
           <EmptyState
             title="暂无操作日志"
@@ -283,7 +285,7 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
         )}
       </div>
 
-        <div className="flex min-h-0 flex-1 flex-col md:hidden">
+        <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
           {paginatedLogs.items.length === 0 ? (
             <EmptyState
               title="暂无操作日志"

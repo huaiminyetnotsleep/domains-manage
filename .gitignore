@@ -23,6 +23,9 @@ pnpm-debug.log*
 # claude worktrees
 .claude/worktrees/
 
+# zcode plans
+.zcode/plans/
+
 # macOS
 .DS_Store
 

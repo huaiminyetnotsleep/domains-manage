@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ComponentProps } from 'react'
+import { useEffect, useState, useTransition, type ComponentProps } from 'react'
 import { ArrowRight, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -50,6 +50,7 @@ export function LoginPageClient() {
   const [rememberSecret, setRememberSecret] = useState(false)
   const [visible, setVisible] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [navigating, startNavigation] = useTransition()
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -86,7 +87,7 @@ export function LoginPageClient() {
       }
 
       toast.success('欢迎回来，正在进入管理后台')
-      router.replace('/dashboard')
+      startNavigation(() => router.replace('/dashboard'))
     } catch (error) {
       const message = error instanceof Error ? error.message : '登录失败'
       setError(message)
@@ -94,6 +95,8 @@ export function LoginPageClient() {
       setSubmitting(false)
     }
   }
+
+  const busy = submitting || navigating
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-500 lg:flex lg:items-center lg:justify-center lg:p-8 xl:p-10 2xl:p-12">
@@ -173,7 +176,7 @@ export function LoginPageClient() {
                       }}
                       placeholder="••••••••••••"
                       autoComplete="off"
-                      disabled={submitting}
+                      disabled={busy}
                       className="h-14 rounded-2xl border-border/40 bg-muted/40 px-5 text-lg transition-all placeholder:opacity-30 focus:border-primary/40 focus:bg-background focus:ring-4 focus:ring-primary/5 dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:focus:bg-white/10"
                     />
                     <Button
@@ -182,7 +185,7 @@ export function LoginPageClient() {
                       size="icon"
                       className="absolute right-3 top-1/2 -translate-y-1/2 hover:bg-transparent"
                       onClick={() => setVisible((current) => !current)}
-                      disabled={submitting}
+                      disabled={busy}
                     >
                       {visible ? (
                         <EyeOff size={18} className="text-muted-foreground/50" />
@@ -195,12 +198,12 @@ export function LoginPageClient() {
                 </Field>
               </FieldGroup>
 
-              <Field orientation="horizontal" data-disabled={submitting || undefined}>
+              <Field orientation="horizontal" data-disabled={busy || undefined}>
                 <Checkbox
                   id="remember-secret"
                   checked={rememberSecret}
                   onCheckedChange={(checked) => setRememberSecret(checked === true)}
-                  disabled={submitting}
+                  disabled={busy}
                 />
                 <FieldLabel htmlFor="remember-secret">记住访问秘钥</FieldLabel>
               </Field>
@@ -208,12 +211,12 @@ export function LoginPageClient() {
               <Button
                 type="submit"
                 className="h-14 w-full rounded-2xl text-base font-bold tracking-wide shadow-xl shadow-primary/10 transition-all active:scale-[0.98] dark:shadow-primary/20 lg:hover:-translate-y-px lg:hover:shadow-primary/30"
-                disabled={submitting}
+                disabled={busy}
               >
-                {submitting ? (
+                {busy ? (
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-background/30 border-t-background" />
-                    <span>身份验证中...</span>
+                    <span>{navigating ? '正在进入...' : '身份验证中...'}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

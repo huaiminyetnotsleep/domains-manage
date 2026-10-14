@@ -1,7 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
+import { after } from 'next/server'
 
 import { requireAccess } from '@/lib/auth/access-server'
 import { buildAccountUpdateDetailFromForm } from '@/lib/activity-log-detail'
@@ -21,7 +22,7 @@ export async function createAccountAction(values: AccountFormValues): Promise<Ac
     const requestContext = getActivityRequestContext(await headers())
     const account = await createAccount(parsed)
 
-    await tryEmitEvent({
+    after(() => tryEmitEvent({
       category: 'account',
       action: 'create',
       resourceType: 'account',
@@ -29,10 +30,11 @@ export async function createAccountAction(values: AccountFormValues): Promise<Ac
       resourceName: account.identifier,
       summary: buildActivitySummary('create', '账号', account.identifier),
       requestContext,
-    })
+    }))
     revalidatePath('/accounts')
     revalidatePath('/domains')
     revalidatePath('/logs')
+    updateTag('accounts')
     return { success: true, data: account }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : '添加账号失败' }
@@ -53,7 +55,7 @@ export async function updateAccountAction(id: string, values: AccountFormValues)
     const sites = await getSitesByIds(siteIds)
 
     await updateAccount(id, parsed)
-    await tryEmitEvent({
+    after(() => tryEmitEvent({
       category: 'account',
       action: 'update',
       resourceType: 'account',
@@ -64,10 +66,11 @@ export async function updateAccountAction(id: string, values: AccountFormValues)
       detail: buildAccountUpdateDetailFromForm(previousAccount, parsed, {
         siteNamesById: new Map(sites.map((site) => [site.id, site.name])),
       }),
-    })
+    }))
     revalidatePath('/accounts')
     revalidatePath('/domains')
     revalidatePath('/logs')
+    updateTag('accounts')
     return { success: true, data: undefined }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : '更新账号失败' }
@@ -81,7 +84,7 @@ export async function deleteAccountAction(id: string) {
   const resourceName = buildDeleteFallbackResourceName(previousAccount?.identifier, id)
 
   await deleteAccount(id)
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'account',
     action: 'delete',
     resourceType: 'account',
@@ -90,10 +93,11 @@ export async function deleteAccountAction(id: string) {
     summary: buildActivitySummary('delete', '账号', resourceName),
     requestContext,
     severity: 'warning',
-  })
+  }))
   revalidatePath('/accounts')
   revalidatePath('/domains')
   revalidatePath('/logs')
+  updateTag('accounts')
 }
 
 export async function toggleAccountActiveAction(id: string, isActive: boolean) {
@@ -101,6 +105,7 @@ export async function toggleAccountActiveAction(id: string, isActive: boolean) {
   await toggleAccountActive(id, isActive)
   revalidatePath('/accounts')
   revalidatePath('/domains')
+  updateTag('accounts')
 }
 
 export async function updateAccountSitesAction(id: string, sites: SiteEntry[]) {
@@ -109,4 +114,5 @@ export async function updateAccountSitesAction(id: string, sites: SiteEntry[]) {
   revalidatePath('/accounts')
   revalidatePath('/accounts/[accountId]')
   revalidatePath('/domains')
+  updateTag('accounts')
 }

@@ -1,7 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
+import { after } from 'next/server'
 
 import { requireAccess } from '@/lib/auth/access-server'
 import { buildSiteUpdateDetailFromForm } from '@/lib/activity-log-detail'
@@ -18,7 +19,7 @@ export async function createSiteAction(values: SiteFormValues): Promise<Site> {
   const requestContext = getActivityRequestContext(await headers())
   const site = await createSite(parsed)
 
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'site',
     action: 'create',
     resourceType: 'site',
@@ -26,12 +27,13 @@ export async function createSiteAction(values: SiteFormValues): Promise<Site> {
     resourceName: site.name,
     summary: buildActivitySummary('create', '站点', site.name),
     requestContext,
-  })
+  }))
   revalidatePath('/sites')
   revalidatePath('/domains')
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/logs')
+  updateTag('sites')
   return site
 }
 
@@ -43,7 +45,7 @@ export async function updateSiteAction(id: string, values: SiteFormValues) {
   const resourceName = parsed.name.trim()
 
   await updateSite(id, parsed)
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'site',
     action: 'update',
     resourceType: 'site',
@@ -55,12 +57,13 @@ export async function updateSiteAction(id: string, values: SiteFormValues) {
       ...parsed,
       name: resourceName,
     }),
-  })
+  }))
   revalidatePath('/sites')
   revalidatePath('/domains')
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/logs')
+  updateTag('sites')
 }
 
 export async function deleteSiteAction(id: string) {
@@ -70,7 +73,7 @@ export async function deleteSiteAction(id: string) {
   const resourceName = buildDeleteFallbackResourceName(previousSite?.name, id)
 
   await deleteSite(id)
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'site',
     action: 'delete',
     resourceType: 'site',
@@ -79,12 +82,13 @@ export async function deleteSiteAction(id: string) {
     summary: buildActivitySummary('delete', '站点', resourceName),
     requestContext,
     severity: 'warning',
-  })
+  }))
   revalidatePath('/sites')
   revalidatePath('/domains')
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/logs')
+  updateTag('sites')
 }
 
 export async function toggleSiteActiveAction(id: string, isActive: boolean) {
@@ -94,6 +98,7 @@ export async function toggleSiteActiveAction(id: string, isActive: boolean) {
   revalidatePath('/domains')
   revalidatePath('/')
   revalidatePath('/dashboard')
+  updateTag('sites')
 }
 
 export async function addFavoriteSiteAction(siteId: string) {

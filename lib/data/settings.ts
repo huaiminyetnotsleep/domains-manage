@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 
 import {
@@ -103,12 +104,9 @@ export async function getSetting(key: SettingsKey): Promise<string> {
   }
 }
 
-export const getProjectTitles = cache(async (): Promise<{ title: string; subtitle: string; icon: string }> => {
-  if (!isSupabaseConfigured()) {
-    return DEFAULT_PROJECT_TITLES
-  }
-
-  try {
+// 每个页面 layout 都会读取项目标题，走 tag 缓存；更新时通过 revalidateTag('settings') 失效
+const readProjectTitlesCached = unstable_cache(
+  async (): Promise<{ title: string; subtitle: string; icon: string }> => {
     const supabase = createSupabaseAdminClient()
     const { data, error } = await supabase
       .from('settings')
@@ -123,6 +121,18 @@ export const getProjectTitles = cache(async (): Promise<{ title: string; subtitl
       subtitle: map.get(SETTINGS_KEYS.PROJECT_SUBTITLE) ?? DEFAULT_PROJECT_TITLES.subtitle,
       icon: map.get(SETTINGS_KEYS.PROJECT_ICON) ?? DEFAULT_PROJECT_TITLES.icon,
     }
+  },
+  ['project-titles'],
+  { tags: ['settings'] },
+)
+
+export const getProjectTitles = cache(async (): Promise<{ title: string; subtitle: string; icon: string }> => {
+  if (!isSupabaseConfigured()) {
+    return DEFAULT_PROJECT_TITLES
+  }
+
+  try {
+    return await readProjectTitlesCached()
   } catch {
     return DEFAULT_PROJECT_TITLES
   }
@@ -137,12 +147,9 @@ export async function upsertSetting(key: SettingsKey, value: string): Promise<vo
   if (error) throw new Error(error.message)
 }
 
-export async function getNotificationRuleSettings(): Promise<NotificationRuleSettings> {
-  if (!isSupabaseConfigured()) {
-    return DEFAULT_NOTIFICATION_RULE_SETTINGS
-  }
-
-  try {
+// 通知规则（expiryDays 等）参与列表页与 dashboard 统计，走 tag 缓存；保存规则时 revalidateTag('settings') 失效
+const getNotificationRuleSettingsCached = unstable_cache(
+  async (): Promise<NotificationRuleSettings> => {
     const preferences = await listNotificationPreferences(DEFAULT_NOTIFICATION_USER_ID)
     const preferenceMap = new Map(preferences.map((item) => [item.typeKey, item]))
     const domainExpiryConfig = normalizeRecord(preferenceMap.get('domain_expiry_reminder')?.config)
@@ -165,6 +172,18 @@ export async function getNotificationRuleSettings(): Promise<NotificationRuleSet
         resourceChange: readResourceChangePreferences(preferenceMap.get('resource_change')?.config),
       },
     }
+  },
+  ['notification-rule-settings'],
+  { tags: ['settings'], revalidate: 300 },
+)
+
+export async function getNotificationRuleSettings(): Promise<NotificationRuleSettings> {
+  if (!isSupabaseConfigured()) {
+    return DEFAULT_NOTIFICATION_RULE_SETTINGS
+  }
+
+  try {
+    return await getNotificationRuleSettingsCached()
   } catch {
     return DEFAULT_NOTIFICATION_RULE_SETTINGS
   }

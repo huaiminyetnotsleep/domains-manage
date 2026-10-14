@@ -1,7 +1,8 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
+import { after } from 'next/server'
 
 import { requireAccess } from '@/lib/auth/access-server'
 import { buildDomainUpdateDetailFromForm } from '@/lib/activity-log-detail'
@@ -23,7 +24,7 @@ export async function createDomainAction(values: DomainFormValues) {
 
   const domain = await createDomain(parsed)
   await ensureAccountSiteRelations(getAccountSiteRelations(parsed))
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'domain',
     action: 'create',
     resourceType: 'domain',
@@ -31,10 +32,13 @@ export async function createDomainAction(values: DomainFormValues) {
     resourceName,
     summary: buildActivitySummary('create', '域名', resourceName),
     requestContext,
-  })
+  }))
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/logs')
+  updateTag('domains')
+  // ensureAccountSiteRelations 会回写 accounts.sites，联动失效账号缓存
+  updateTag('accounts')
   revalidateAccountPaths(parsed)
 }
 
@@ -69,7 +73,7 @@ export async function updateDomainAction(id: string, values: DomainFormValues) {
     siteNamesById: new Map(sites.map((site) => [site.id, site.name])),
   })
 
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'domain',
     action: 'update',
     resourceType: 'domain',
@@ -78,10 +82,12 @@ export async function updateDomainAction(id: string, values: DomainFormValues) {
     summary: buildActivitySummary('update', '域名', resourceName),
     requestContext,
     detail,
-  })
+  }))
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/logs')
+  updateTag('domains')
+  updateTag('accounts')
   revalidateAccountPaths(parsed, previousDomain)
 }
 
@@ -120,7 +126,7 @@ export async function deleteDomainAction(id: string) {
   const resourceName = buildDeleteFallbackResourceName(previousDomain?.name, id)
 
   await deleteDomain(id)
-  await tryEmitEvent({
+  after(() => tryEmitEvent({
     category: 'domain',
     action: 'delete',
     resourceType: 'domain',
@@ -129,11 +135,12 @@ export async function deleteDomainAction(id: string) {
     summary: buildActivitySummary('delete', '域名', resourceName),
     requestContext,
     severity: 'warning',
-  })
+  }))
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/domains')
   revalidatePath('/logs')
+  updateTag('domains')
   revalidateDeletedAccountPaths(previousDomain ? [previousDomain] : [])
 }
 
@@ -144,7 +151,7 @@ export async function deleteDomainsAction(ids: string[]) {
   const requestContext = getActivityRequestContext(await headers())
 
   await deleteDomains(ids)
-  await Promise.all(previousDomains.map((domain) => tryEmitEvent({
+  after(() => Promise.all(previousDomains.map((domain) => tryEmitEvent({
     category: 'domain',
     action: 'delete',
     resourceType: 'domain',
@@ -153,10 +160,11 @@ export async function deleteDomainsAction(ids: string[]) {
     summary: buildActivitySummary('delete', '域名', domain.name),
     requestContext,
     severity: 'warning',
-  })))
+  }))))
   revalidatePath('/')
   revalidatePath('/dashboard')
   revalidatePath('/domains')
   revalidatePath('/logs')
+  updateTag('domains')
   revalidateDeletedAccountPaths(previousDomains)
 }
