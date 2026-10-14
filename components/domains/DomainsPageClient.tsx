@@ -6,7 +6,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { deleteDomainAction, deleteDomainsAction } from '@/app/actions/domains'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { EmptyState } from '@/components/common/EmptyState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { MobilePagination } from '@/components/common/MobilePagination'
+import { Globe } from 'lucide-react'
 import { DEFAULT_VISIBLE_DOMAIN_COLUMNS, type HideableDomainColumnKey } from '@/components/domains/domain-columns'
 import { DomainCardList } from '@/components/domains/DomainCardList'
 import { DomainDetailsDialog } from '@/components/domains/DomainDetailsDialog'
@@ -222,7 +224,12 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
   )
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-6 md:h-[calc(100dvh-3.5rem-3rem)]">
+    <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-4 md:gap-5 md:h-[calc(100dvh-3.5rem-3rem)]">
+      <PageHeader
+        title="域名管理"
+        description="管理与监控所有顶级域名资产、解析站点配置与证书有效期"
+      />
+
       <DomainToolbar
         filters={initialFilters}
         keywordInput={keywordInput}
@@ -269,7 +276,12 @@ export function DomainsPageClient({ initialFilters, paginatedDomains, sites, lin
         <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
           <div className="min-h-0 flex-1 overflow-auto p-3">
             {domains.length === 0 ? (
-              <EmptyState title="暂无域名数据" description="先添加一个域名，或从 JSON 文件导入已有数据。" fillHeight />
+              <EmptyState
+                icon={<Globe className="size-6 text-muted-foreground/60" />}
+                title="暂无域名数据"
+                description="先添加一个域名，或从 JSON 文件导入已有数据。"
+                fillHeight
+              />
             ) : (
               <DomainCardList
                 domains={domains}

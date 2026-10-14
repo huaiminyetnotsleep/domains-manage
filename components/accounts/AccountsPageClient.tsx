@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { Globe, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react'
+import { Globe, KeyRound, Pencil, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { deleteAccountAction, toggleAccountActiveAction, updateAccountSitesAction } from '@/app/actions/accounts'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { EmptyState } from '@/components/common/EmptyState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { MobilePagination } from '@/components/common/MobilePagination'
 import { AccountCardList } from '@/components/accounts/AccountCardList'
 import { AccountFormDialog } from '@/components/accounts/AccountFormDialog'
@@ -229,14 +230,22 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
   )
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-6 md:h-[calc(100dvh-3.5rem-3rem)]">
+    <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-4 md:gap-5 md:h-[calc(100dvh-3.5rem-3rem)]">
+      <PageHeader
+        title="账号管理"
+        description="维护可复用的多站点登录凭据、密码提示与安全归档位置"
+      />
+
       <div className="flex flex-wrap items-center gap-3">
-        <Input
-          className="max-w-xs"
-          placeholder="搜索账号 / 备注"
-          value={keywordInput}
-          onChange={(event) => setKeywordInput(event.target.value)}
-        />
+        <label className="relative w-full max-w-xs min-w-0">
+          <Search size={15} className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none" />
+          <Input
+            className="pl-9"
+            placeholder="搜索账号 / 备注"
+            value={keywordInput}
+            onChange={(event) => setKeywordInput(event.target.value)}
+          />
+        </label>
         <Select value={initialFilters.emailProvider} onValueChange={(value) => updateSearchParams({ ...initialFilters, emailProvider: value as AccountFilters['emailProvider'] })}>
           <SelectTrigger className="w-[11rem]">
             <SelectValue placeholder="全部账号类型" />
@@ -293,6 +302,7 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
       <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
         {accounts.length === 0 ? (
           <EmptyState
+            icon={<KeyRound className="size-6 text-muted-foreground/60" />}
             title="暂无账号数据"
             description="先添加可复用账号，后续可在域名、DNS、GitHub 等站点中直接选择。"
             action={<Button onClick={() => { setEditingAccount(null); setDialogOpen(true) }}>添加账号</Button>}
@@ -364,13 +374,13 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
                         <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" onClick={() => setSiteAccount(account)} title="管理站点">
-                              <Globe />
+                              <Globe size={16} />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => { setEditingAccount(account); setDialogOpen(true) }}>
-                              <Pencil />
+                              <Pencil size={16} />
                             </Button>
                             <Button variant="ghost" size="icon" onClick={() => setDeletingAccount(account)}>
-                              <Trash2 />
+                              <Trash2 size={16} />
                             </Button>
                           </div>
                         </TableCell>
@@ -391,6 +401,7 @@ export function AccountsPageClient({ initialFilters, paginatedAccounts, usedSite
       <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
         {accounts.length === 0 ? (
           <EmptyState
+            icon={<KeyRound className="size-6 text-muted-foreground/60" />}
             title="暂无账号数据"
             description="先添加可复用账号，后续可在域名、DNS、GitHub 等站点中直接选择。"
             action={<Button onClick={() => { setEditingAccount(null); setDialogOpen(true) }}>添加账号</Button>}

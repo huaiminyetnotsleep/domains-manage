@@ -10,6 +10,7 @@ import { SiteAccountChart } from '@/components/dashboard/SiteCharts'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { PageHeader } from '@/components/common/PageHeader'
 import { DomainStatsCards, AccountStatsCards, SiteStatsCards } from '@/components/dashboard/StatsCards'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from '@/lib/date'
@@ -86,6 +87,17 @@ export function DashboardPageClient(props: DashboardPageClientProps) {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="监测看板"
+        description="全方位监控域名资产、解析站点与关联账户的运行状态与到期风险"
+        actions={
+          <Button variant="outline" size="sm" onClick={refresh} disabled={spinning} className="gap-2">
+            <RefreshCw size={14} className={spinning ? 'animate-spin' : ''} />
+            <span>刷新数据</span>
+          </Button>
+        }
+      />
+
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex items-center justify-between">
           <TabsList variant="line">
@@ -102,9 +114,6 @@ export function DashboardPageClient(props: DashboardPageClientProps) {
               账户监控
             </TabsTrigger>
           </TabsList>
-          <Button variant="ghost" size="icon" onClick={refresh} disabled={spinning}>
-            <RefreshCw size={16} className={spinning ? 'animate-spin' : ''} />
-          </Button>
         </div>
 
         <TabsContent value="domains" className="mt-6 space-y-6">

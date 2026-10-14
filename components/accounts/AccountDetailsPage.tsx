@@ -70,22 +70,22 @@ export function AccountDetailsPage({ account, sites, emailIdentifiers }: { accou
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-3">
-          <Button variant="ghost" asChild>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1.5">
+          <Button variant="ghost" size="sm" asChild className="-ml-2.5 h-8 gap-1.5 text-muted-foreground hover:text-foreground">
             <Link href="/accounts">
-              <ChevronLeft />
+              <ChevronLeft size={15} />
               返回账号列表
             </Link>
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">{account.identifier}</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{account.identifier}</h1>
+            <Badge variant={account.isActive ? 'success' : 'secondary'}>{account.isActive ? '启用' : '停用'}</Badge>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={account.isActive ? 'default' : 'secondary'}>{account.isActive ? '启用' : '停用'}</Badge>
-          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-            <Pencil />
+          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)} className="gap-1.5">
+            <Pencil size={14} />
             编辑
           </Button>
         </div>
@@ -109,8 +109,8 @@ export function AccountDetailsPage({ account, sites, emailIdentifiers }: { accou
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">注册站点</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)}>
-            <Plus />
+          <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)} className="gap-1.5">
+            <Plus size={14} />
             添加站点
           </Button>
         </CardHeader>
@@ -120,8 +120,8 @@ export function AccountDetailsPage({ account, sites, emailIdentifiers }: { accou
               title="暂未分配注册站点"
               description="为账号添加可复用站点，后续域名保存时也会自动补齐关联。"
               action={(
-                <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)}>
-                  <Plus />
+                <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)} className="gap-1.5">
+                  <Plus size={14} />
                   添加站点
                 </Button>
               )}
@@ -129,7 +129,7 @@ export function AccountDetailsPage({ account, sites, emailIdentifiers }: { accou
           ) : (
             <>
               {/* Desktop: Table */}
-              <div className="hidden md:block rounded-md border">
+              <div className="hidden md:block rounded-lg border border-border/80 overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -164,8 +164,8 @@ export function AccountDetailsPage({ account, sites, emailIdentifiers }: { accou
                             <Button variant="ghost" size="icon" onClick={() => { setEditNoteEntry(entry.site); setEditNoteValue(entry.note) }} title="编辑备注">
                               <Pencil className="size-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setRemoveSite(entry.site)}>
-                              <Trash2 />
+                            <Button variant="ghost" size="icon" onClick={() => setRemoveSite(entry.site)} title="移除站点">
+                              <Trash2 className="size-4 text-destructive/80 hover:text-destructive" />
                             </Button>
                           </div>
                         </TableCell>

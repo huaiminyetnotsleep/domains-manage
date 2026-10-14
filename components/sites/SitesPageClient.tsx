@@ -2,12 +2,13 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Globe, LayoutGrid, List, Pencil, Plus, RefreshCw, Star, Trash2 } from 'lucide-react'
+import { Globe, LayoutGrid, List, Pencil, Plus, RefreshCw, Search, Star, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 
 import { deleteSiteAction, toggleSiteActiveAction, addFavoriteSiteAction, removeFavoriteSiteAction, reorderFavoriteSitesAction } from '@/app/actions/sites'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { EmptyState } from '@/components/common/EmptyState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { SiteCategoryCardView, type SiteCategoryGroup } from '@/components/sites/SiteCategoryCardView'
 import { useRefreshWithSpin } from '@/hooks/useRefreshWithSpin'
 import type { FavoriteSite } from '@/types/site'
@@ -178,16 +179,24 @@ export function SitesPageClient({ initialSites, total, initialFavorites }: Sites
 
   return (
     <TooltipProvider>
-      <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-6 md:h-[calc(100dvh-3.5rem-3rem)]">
+      <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-4 md:gap-5 md:h-[calc(100dvh-3.5rem-3rem)]">
+        <PageHeader
+          title="站点管理"
+          description="统一管理域名注册站点与 DNS 托管站点，支持快速收藏与类别导航"
+        />
+
         <div className="flex min-h-0 w-full flex-1 flex-col gap-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Input
-                placeholder="搜索站点名称、描述或备注..."
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                className="max-w-sm"
-              />
+              <label className="relative w-full max-w-sm min-w-0">
+                <Search size={15} className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none" />
+                <Input
+                  placeholder="搜索站点名称、描述或备注..."
+                  value={keyword}
+                  onChange={(event) => setKeyword(event.target.value)}
+                  className="pl-9"
+                />
+              </label>
               <SearchableSelect
                 value={selectedCategory}
                 onValueChange={setSelectedCategory}
@@ -254,6 +263,7 @@ export function SitesPageClient({ initialSites, total, initialFavorites }: Sites
             <TabsContent value="table" className="mt-0 min-h-0 flex-1">
               {filteredSites.length === 0 ? (
                 <EmptyState
+                  icon={<LayoutGrid className="size-6 text-muted-foreground/60" />}
                   title="暂无站点数据"
                   description="先添加注册站点或 DNS 站点，后续可在域名与账号管理中直接关联使用。"
                   action={<Button onClick={() => { setEditingSite(null); setDialogOpen(true) }}>添加站点</Button>}

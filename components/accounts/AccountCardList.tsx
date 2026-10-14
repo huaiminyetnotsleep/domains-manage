@@ -27,7 +27,7 @@ export function AccountCardList({ accounts, sites, onToggleActive, onManageSites
   return (
     <div className="space-y-3">
       {accounts.map((account) => (
-        <div key={account.id} className="rounded-lg border bg-card p-4 space-y-3 cursor-pointer" onClick={() => onClickCard(account.id)}>
+        <div key={account.id} className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-xs hover:border-border transition-all duration-150 cursor-pointer" onClick={() => onClickCard(account.id)}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <Link

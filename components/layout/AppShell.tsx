@@ -115,11 +115,10 @@ export function AppShell({ children }: AppShellProps) {
               </Button>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <div className="bg-card/80 border-border/70 flex items-center rounded-xl border p-1 shadow-sm">
+            <div className="flex shrink-0 items-center">
+              <div className="bg-card/80 border-border/70 flex items-center gap-1 rounded-xl border p-1 shadow-xs backdrop-blur-md">
                 <ThemeToggle />
-              </div>
-              <div className="bg-card/80 border-border/70 flex items-center rounded-xl border p-1 shadow-sm">
+                <div className="bg-border/70 h-4 w-px my-auto" />
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -127,7 +126,7 @@ export function AppShell({ children }: AppShellProps) {
                         type="button"
                         variant="ghost"
                         size="icon-xs"
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive transition-colors"
                         onClick={handleLogout}
                         disabled={isPending}
                         aria-label={isPending ? '退出中...' : '退出登录'}

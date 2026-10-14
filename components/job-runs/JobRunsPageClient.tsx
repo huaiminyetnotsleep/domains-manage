@@ -1,7 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Loader2, Play, RefreshCw } from 'lucide-react'
+import { ListTree, Loader2, Play, RefreshCw } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import {
   runDomainExpiryCheckManuallyAction,
 } from '@/app/actions/jobs'
 import { EmptyState } from '@/components/common/EmptyState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { MobilePagination } from '@/components/common/MobilePagination'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -179,43 +180,48 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
 
   return (
     <TooltipProvider>
-      <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-6 md:h-[calc(100dvh-3.5rem-3rem)]">
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            <SummaryMetric label="总执行" value={summary.total} />
-            <SummaryMetric label="今日" value={summary.today} />
-            <SummaryMetric label="成功" value={summary.success} />
-            <SummaryMetric label="失败" value={summary.failed} />
-          </div>
-
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {RUNNABLE_JOBS.map((job) => (
-              <Button
-                key={job.key}
-                variant={job.variant}
-                size="sm"
-                onClick={() => { void handleRun(job) }}
-                disabled={Boolean(runningJob) || spinning}
-              >
-                {runningJob === job.key ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                <span className="hidden sm:inline">{job.label}</span>
-                <span className="sm:hidden">{job.shortLabel}</span>
-              </Button>
-            ))}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering || Boolean(runningJob)} aria-label="刷新">
-                  <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
+      <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-4 md:gap-5 md:h-[calc(100dvh-3.5rem-3rem)]">
+        <PageHeader
+          title="任务执行"
+          description="监控后台定时到期检查任务状态、触发来源与执行日志追踪"
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              {RUNNABLE_JOBS.map((job) => (
+                <Button
+                  key={job.key}
+                  variant={job.variant}
+                  size="sm"
+                  onClick={() => { void handleRun(job) }}
+                  disabled={Boolean(runningJob) || spinning}
+                >
+                  {runningJob === job.key ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
+                  <span className="hidden sm:inline">{job.label}</span>
+                  <span className="sm:hidden">{job.shortLabel}</span>
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>刷新</TooltipContent>
-            </Tooltip>
-          </div>
+              ))}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering || Boolean(runningJob)} aria-label="刷新">
+                    <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>刷新</TooltipContent>
+              </Tooltip>
+            </div>
+          }
+        />
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <SummaryMetric label="总执行" value={summary.total} />
+          <SummaryMetric label="今日执行" value={summary.today} />
+          <SummaryMetric label="成功次数" value={summary.success} />
+          <SummaryMetric label="失败次数" value={summary.failed} />
         </div>
 
         <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
           {paginatedRuns.items.length === 0 ? (
             <EmptyState
+              icon={<ListTree className="size-6 text-muted-foreground/60" />}
               title="暂无执行记录"
               description="当前还没有可展示的任务执行记录。"
               fillHeight
@@ -264,6 +270,7 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
         <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
           {paginatedRuns.items.length === 0 ? (
             <EmptyState
+              icon={<ListTree className="size-6 text-muted-foreground/60" />}
               title="暂无执行记录"
               description="当前还没有可展示的任务执行记录。"
               fillHeight
@@ -288,9 +295,11 @@ export function JobRunsPageClient({ paginatedRuns, summary }: JobRunsPageClientP
 
 function SummaryMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-sm font-semibold text-foreground tabular-nums">{value}</span>
+    <div className="flex items-center gap-2.5 rounded-lg border bg-card/80 px-3.5 py-2 shadow-xs transition-colors">
+      <div className="space-y-0.5">
+        <div className="text-xs text-muted-foreground font-medium">{label}</div>
+        <div className="text-lg font-semibold tracking-tight text-foreground tabular-nums">{value}</div>
+      </div>
     </div>
   )
 }

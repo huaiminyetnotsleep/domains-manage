@@ -22,19 +22,19 @@ function isActive(pathname: string, href: string, exact?: boolean) {
 
 function getNavItemClassName(collapsed: boolean, active: boolean) {
   return cn(
-    'app-shell-nav-item group flex rounded-lg py-1.5 text-sm font-medium transition-colors',
+    'app-shell-nav-item group flex rounded-lg py-1.5 text-sm font-medium transition-all duration-150',
     collapsed ? 'justify-center px-2' : 'items-center gap-2.5 px-2.5',
     active
-      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+      ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground shadow-xs'
+      : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground',
   )
 }
 
 function getNavIconClassName(active: boolean) {
   return cn(
-    'flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors',
+    'flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all duration-150',
     active
-      ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-xs'
       : 'text-muted-foreground group-hover:text-sidebar-foreground',
   )
 }
@@ -71,7 +71,7 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                         onClick={onNavigate}
                       >
                         <span className={getNavIconClassName(active)}>
-                          <Icon size={12} />
+                          <Icon size={14} />
                         </span>
                         {!collapsed ? <span className="app-shell-nav-label min-w-0 flex-1 truncate text-left">{item.label}</span> : null}
                       </Link>
@@ -111,7 +111,7 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
                   onClick={onNavigate}
                 >
                   <span className={getNavIconClassName(active)}>
-                    <Icon size={12} />
+                    <Icon size={14} />
                   </span>
                   {!collapsed ? <span className="app-shell-nav-label min-w-0 flex-1 truncate text-left">{item.label}</span> : null}
                 </Link>

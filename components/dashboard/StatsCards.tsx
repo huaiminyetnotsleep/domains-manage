@@ -20,17 +20,17 @@ type AccountStatistics = {
 }
 
 const domainItems = [
-  { key: 'total', label: '总域名数', valueClassName: 'text-foreground', iconClassName: 'text-foreground', toneClassName: 'bg-muted text-foreground border-border/60', icon: Globe },
-  { key: 'expiring', label: '即将到期', valueClassName: 'text-amber-700 dark:text-amber-300', iconClassName: 'text-amber-700 dark:text-amber-300', toneClassName: 'bg-amber-500/10 text-amber-700 border-amber-500/15 dark:text-amber-300', icon: CalendarClock },
-  { key: 'expired', label: '已过期', valueClassName: 'text-destructive', iconClassName: 'text-destructive', toneClassName: 'bg-destructive/10 text-destructive border-destructive/15', icon: CircleAlert },
-  { key: 'newThisWeek', label: '本周新增', valueClassName: 'text-foreground', iconClassName: 'text-muted-foreground', toneClassName: 'bg-muted/80 text-muted-foreground border-border/60', icon: Activity },
+  { key: 'total', label: '总域名数', valueClassName: 'text-foreground', iconClassName: 'text-foreground', toneClassName: 'bg-muted/70 text-foreground border-border/80', icon: Globe },
+  { key: 'expiring', label: '即将到期', valueClassName: 'text-warning-foreground dark:text-warning', iconClassName: 'text-warning-foreground dark:text-warning', toneClassName: 'bg-warning-muted text-warning-foreground border-warning/25 dark:text-warning', icon: CalendarClock },
+  { key: 'expired', label: '已过期', valueClassName: 'text-destructive', iconClassName: 'text-destructive', toneClassName: 'bg-destructive/10 text-destructive border-destructive/20', icon: CircleAlert },
+  { key: 'newThisWeek', label: '本周新增', valueClassName: 'text-foreground', iconClassName: 'text-accent-brand', toneClassName: 'bg-accent-brand-muted text-accent-brand border-accent-brand/25', icon: Activity },
 ] as const
 
 const accountItems = [
-  { key: 'total', label: '总账户数', valueClassName: 'text-foreground', iconClassName: 'text-foreground', toneClassName: 'bg-muted text-foreground border-border/60', icon: User },
-  { key: 'active', label: '启用账户', valueClassName: 'text-green-700 dark:text-green-300', iconClassName: 'text-green-700 dark:text-green-300', toneClassName: 'bg-green-500/10 text-green-700 border-green-500/15 dark:text-green-300', icon: UserCheck },
-  { key: 'inactive', label: '停用账户', valueClassName: 'text-muted-foreground', iconClassName: 'text-muted-foreground', toneClassName: 'bg-muted/80 text-muted-foreground border-border/60', icon: UserX },
-  { key: 'newThisWeek', label: '本周新增', valueClassName: 'text-foreground', iconClassName: 'text-muted-foreground', toneClassName: 'bg-muted/80 text-muted-foreground border-border/60', icon: UserPlus },
+  { key: 'total', label: '总账户数', valueClassName: 'text-foreground', iconClassName: 'text-foreground', toneClassName: 'bg-muted/70 text-foreground border-border/80', icon: User },
+  { key: 'active', label: '启用账户', valueClassName: 'text-success dark:text-success', iconClassName: 'text-success dark:text-success', toneClassName: 'bg-success-muted text-success border-success/25 dark:text-success', icon: UserCheck },
+  { key: 'inactive', label: '停用账户', valueClassName: 'text-muted-foreground', iconClassName: 'text-muted-foreground', toneClassName: 'bg-muted/60 text-muted-foreground border-border/60', icon: UserX },
+  { key: 'newThisWeek', label: '本周新增', valueClassName: 'text-foreground', iconClassName: 'text-accent-brand', toneClassName: 'bg-accent-brand-muted text-accent-brand border-accent-brand/25', icon: UserPlus },
 ] as const
 
 export function DomainStatsCards({ statistics }: { statistics: DomainStatistics }) {
@@ -41,15 +41,15 @@ export function DomainStatsCards({ statistics }: { statistics: DomainStatistics 
 
         return (
           <motion.div key={item.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-            <Card>
+            <Card className="transition-all duration-200 hover:shadow-md">
               <CardContent>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-muted-foreground text-sm">{item.label}</div>
-                    <div className={`mt-3 text-2xl font-semibold md:text-3xl ${item.valueClassName}`}>{statistics[item.key]}</div>
+                    <div className="text-muted-foreground text-sm font-medium">{item.label}</div>
+                    <div className={`mt-3 text-2xl font-semibold tracking-tight md:text-3xl ${item.valueClassName}`}>{statistics[item.key]}</div>
                   </div>
-                  <div className={`${item.toneClassName} flex h-10 w-10 items-center justify-center rounded-2xl border`}>
-                    <Icon size={18} className={item.iconClassName} />
+                  <div className={`${item.toneClassName} flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs`}>
+                    <Icon size={20} className={item.iconClassName} />
                   </div>
                 </div>
               </CardContent>
@@ -69,15 +69,15 @@ export function AccountStatsCards({ statistics }: { statistics: AccountStatistic
 
         return (
           <motion.div key={item.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-            <Card>
+            <Card className="transition-all duration-200 hover:shadow-md">
               <CardContent>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-muted-foreground text-sm">{item.label}</div>
-                    <div className={`mt-3 text-2xl font-semibold md:text-3xl ${item.valueClassName}`}>{statistics[item.key]}</div>
+                    <div className="text-muted-foreground text-sm font-medium">{item.label}</div>
+                    <div className={`mt-3 text-2xl font-semibold tracking-tight md:text-3xl ${item.valueClassName}`}>{statistics[item.key]}</div>
                   </div>
-                  <div className={`${item.toneClassName} flex h-10 w-10 items-center justify-center rounded-2xl border`}>
-                    <Icon size={18} className={item.iconClassName} />
+                  <div className={`${item.toneClassName} flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs`}>
+                    <Icon size={20} className={item.iconClassName} />
                   </div>
                 </div>
               </CardContent>
@@ -97,10 +97,10 @@ type SiteStatistics = {
 }
 
 const siteItems = [
-  { key: 'total', label: '总站点数', valueClassName: 'text-foreground', iconClassName: 'text-foreground', toneClassName: 'bg-muted text-foreground border-border/60', icon: Server },
-  { key: 'active', label: '启用站点', valueClassName: 'text-green-700 dark:text-green-300', iconClassName: 'text-green-700 dark:text-green-300', toneClassName: 'bg-green-500/10 text-green-700 border-green-500/15 dark:text-green-300', icon: ServerCog },
-  { key: 'inactive', label: '停用站点', valueClassName: 'text-muted-foreground', iconClassName: 'text-muted-foreground', toneClassName: 'bg-muted/80 text-muted-foreground border-border/60', icon: ServerOff },
-  { key: 'categories', label: '站点分类', valueClassName: 'text-blue-700 dark:text-blue-300', iconClassName: 'text-blue-700 dark:text-blue-300', toneClassName: 'bg-blue-500/10 text-blue-700 border-blue-500/15 dark:text-blue-300', icon: Tags },
+  { key: 'total', label: '总站点数', valueClassName: 'text-foreground', iconClassName: 'text-foreground', toneClassName: 'bg-muted/70 text-foreground border-border/80', icon: Server },
+  { key: 'active', label: '启用站点', valueClassName: 'text-success dark:text-success', iconClassName: 'text-success dark:text-success', toneClassName: 'bg-success-muted text-success border-success/25 dark:text-success', icon: ServerCog },
+  { key: 'inactive', label: '停用站点', valueClassName: 'text-muted-foreground', iconClassName: 'text-muted-foreground', toneClassName: 'bg-muted/60 text-muted-foreground border-border/60', icon: ServerOff },
+  { key: 'categories', label: '站点分类', valueClassName: 'text-accent-brand', iconClassName: 'text-accent-brand', toneClassName: 'bg-accent-brand-muted text-accent-brand border-accent-brand/25', icon: Tags },
 ] as const
 
 export function SiteStatsCards({ statistics }: { statistics: SiteStatistics }) {
@@ -111,15 +111,15 @@ export function SiteStatsCards({ statistics }: { statistics: SiteStatistics }) {
 
         return (
           <motion.div key={item.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-            <Card>
+            <Card className="transition-all duration-200 hover:shadow-md">
               <CardContent>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-muted-foreground text-sm">{item.label}</div>
-                    <div className={`mt-3 text-2xl font-semibold md:text-3xl ${item.valueClassName}`}>{statistics[item.key]}</div>
+                    <div className="text-muted-foreground text-sm font-medium">{item.label}</div>
+                    <div className={`mt-3 text-2xl font-semibold tracking-tight md:text-3xl ${item.valueClassName}`}>{statistics[item.key]}</div>
                   </div>
-                  <div className={`${item.toneClassName} flex h-10 w-10 items-center justify-center rounded-2xl border`}>
-                    <Icon size={18} className={item.iconClassName} />
+                  <div className={`${item.toneClassName} flex h-11 w-11 items-center justify-center rounded-2xl border shadow-xs`}>
+                    <Icon size={20} className={item.iconClassName} />
                   </div>
                 </div>
               </CardContent>

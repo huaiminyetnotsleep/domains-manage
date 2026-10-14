@@ -2,7 +2,7 @@
 
 import { useMemo, type ReactNode } from 'react'
 import Link from 'next/link'
-import { CircleHelp, Copy, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { CircleHelp, Copy, Eye, Globe, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 
 import { EmptyState } from '@/components/common/EmptyState'
 import { Badge } from '@/components/ui/badge'
@@ -45,7 +45,7 @@ export function DomainTable({ domains, linkSites, visibleColumns = DEFAULT_VISIB
   const siteById = useMemo(() => new Map(linkSites.map((site) => [site.id, site])), [linkSites])
 
   if (!domains.length) {
-    return <EmptyState title="暂无域名数据" description="先添加一个域名，或从 JSON 文件导入已有数据。" fillHeight footer={pagination} />
+    return <EmptyState icon={<Globe className="size-6 text-muted-foreground/60" />} title="暂无域名数据" description="先添加一个域名，或从 JSON 文件导入已有数据。" fillHeight footer={pagination} />
   }
 
   return (

@@ -32,26 +32,24 @@ export function DomainDetailsPage({ domain, linkSites, accountLookup, expiryDays
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-3">
-          <Button variant="ghost" asChild>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1.5">
+          <Button variant="ghost" size="sm" asChild className="-ml-2.5 h-8 gap-1.5 text-muted-foreground hover:text-foreground">
             <Link href="/domains">
-              <ChevronLeft size={16} />
+              <ChevronLeft size={15} />
               返回域名列表
             </Link>
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">{domain.name}</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{domain.name}</h1>
+            <Badge className={getStatusColor(status)} variant="outline">{getStatusLabel(status)}</Badge>
           </div>
-        </div>
-        <div className="min-w-[96px] whitespace-nowrap">
-          <Badge className={getStatusColor(status)} variant="outline">{getStatusLabel(status)}</Badge>
         </div>
       </div>
 
       <Card>
         <CardContent>
-          <div className="grid gap-x-6 gap-y-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
             <Info label="注册站点" value={registrarSite?.name ?? '未设置'} href={registrarSite?.websiteUrl || undefined} />
             <AccountInfo label="注册站点账号" value={registrarAccount.name} highlight={registrarAccount.highlight} tooltip={registrarAccount.tooltip} />
             <Info label="DNS 站点" value={dnsSite?.name ?? '未设置'} href={dnsSite?.websiteUrl || undefined} />
@@ -63,7 +61,7 @@ export function DomainDetailsPage({ domain, linkSites, accountLookup, expiryDays
         </CardContent>
       </Card>
 
-      <SubdomainManager domain={domain} addIcon={<Plus size={16} className="mr-2" />} />
+      <SubdomainManager domain={domain} addIcon={<Plus size={16} className="mr-1.5" />} />
     </div>
   )
 }

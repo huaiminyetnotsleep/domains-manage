@@ -34,7 +34,17 @@
   --chart-11: oklch(0.5 0.2 270);
   --chart-12: oklch(0.75 0.18 120);
   --success: oklch(0.55 0.17 145);
+  --success-subtle: oklch(0.97 0.04 145);
+  --success-muted: oklch(0.55 0.17 145 / 12%);
   --danger: oklch(0.58 0.2 25);
+  --warning: oklch(0.75 0.15 80);
+  --warning-foreground: oklch(0.42 0.12 78);
+  --warning-subtle: oklch(0.97 0.04 80);
+  --warning-muted: oklch(0.75 0.15 80 / 12%);
+  --accent-brand: oklch(0.55 0.22 260);
+  --accent-brand-foreground: oklch(0.985 0 0);
+  --accent-brand-subtle: oklch(0.96 0.04 260);
+  --accent-brand-muted: oklch(0.55 0.22 260 / 12%);
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -86,7 +96,17 @@
   --chart-11: oklch(0.6 0.22 270);
   --chart-12: oklch(0.78 0.18 120);
   --success: oklch(0.68 0.17 145);
+  --success-subtle: oklch(0.2 0.04 145);
+  --success-muted: oklch(0.68 0.17 145 / 15%);
   --danger: oklch(0.68 0.19 25);
+  --warning: oklch(0.82 0.16 80);
+  --warning-foreground: oklch(0.22 0.1 78);
+  --warning-subtle: oklch(0.2 0.04 80);
+  --warning-muted: oklch(0.82 0.16 80 / 15%);
+  --accent-brand: oklch(0.65 0.2 260);
+  --accent-brand-foreground: oklch(0.12 0 0);
+  --accent-brand-subtle: oklch(0.2 0.05 260);
+  --accent-brand-muted: oklch(0.65 0.2 260 / 18%);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -132,7 +152,17 @@
   --color-chart-11: var(--chart-11);
   --color-chart-12: var(--chart-12);
   --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-muted: var(--success-muted);
   --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-muted: var(--warning-muted);
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-brand-foreground: var(--accent-brand-foreground);
+  --color-accent-brand-subtle: var(--accent-brand-subtle);
+  --color-accent-brand-muted: var(--accent-brand-muted);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -161,7 +191,8 @@ body {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, color-mix(in oklab, var(--foreground) 4%, transparent), transparent 28%),
+    radial-gradient(ellipse 80% 50% at 50% -12%, color-mix(in oklab, var(--accent-brand) 5%, transparent), transparent),
+    radial-gradient(circle at top, color-mix(in oklab, var(--foreground) 3.5%, transparent), transparent 28%),
     linear-gradient(to bottom, color-mix(in oklab, var(--muted) 35%, var(--background)), var(--background) 18rem);
   color: var(--foreground);
 }

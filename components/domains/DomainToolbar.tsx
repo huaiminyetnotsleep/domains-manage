@@ -138,7 +138,7 @@ export function DomainToolbar({ filters, keywordInput, sites, suffixOptions, sel
             {selectedCount > 0 ? (
               <>
                 <Badge variant="secondary">已选 {selectedCount} 项</Badge>
-                <Button variant="destructive" onClick={onDeleteSelected}><Trash2 size={16} className="mr-2" />批量删除</Button>
+                <Button variant="destructive" onClick={onDeleteSelected}><Trash2 data-icon="inline-start" />批量删除</Button>
               </>
             ) : null}
             <Tooltip>
@@ -194,7 +194,7 @@ export function DomainToolbar({ filters, keywordInput, sites, suffixOptions, sel
                 <p>刷新</p>
               </TooltipContent>
             </Tooltip>
-            <Button onClick={onAdd}><Plus size={16} className="mr-2" />添加域名</Button>
+            <Button onClick={onAdd}><Plus data-icon="inline-start" />添加域名</Button>
           </div>
         </div>
       </div>

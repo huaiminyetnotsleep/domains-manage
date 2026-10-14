@@ -41,14 +41,14 @@ export function DomainCardList({ domains, linkSites, visibleColumns = DEFAULT_VI
           const expiryCountdown = getExpiryCountdownLabel(domain.expiryDate)
 
           return (
-            <div key={domain.id} className="rounded-lg border bg-card p-4 space-y-3">
+            <div key={domain.id} className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-xs hover:border-border transition-all duration-150">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <Link
                     href={`/domains/${domain.id}`}
                     className={cn(
-                      'font-medium truncate transition-colors hover:text-primary',
-                      domain.isFree ? 'text-foreground' : 'text-amber-600 dark:text-amber-400',
+                      'font-medium truncate transition-colors hover:text-accent-brand',
+                      domain.isFree ? 'text-foreground' : 'text-warning-foreground dark:text-warning',
                     )}
                   >
                     {domain.name}

@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { updateProjectTitlesAction } from '@/app/actions/settings'
 import { NotificationSettings } from '@/components/settings/notification-settings'
+import { PageHeader } from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -182,9 +183,15 @@ export function SettingsPageClient({ notificationSettings }: SettingsPageClientP
   }, [])
 
   return (
-    <div className="flex gap-8">
-      <nav className="hidden w-44 shrink-0 md:block">
-        <div className="sticky top-24 space-y-1">
+    <div className="space-y-6">
+      <PageHeader
+        title="系统设置"
+        description="管理项目品牌展示、系统级配置与多渠道监控提醒服务"
+      />
+
+      <div className="flex gap-8">
+        <nav className="hidden w-44 shrink-0 md:block">
+          <div className="sticky top-24 space-y-1">
           {SECTIONS.map((section) => {
             const SectionIcon = section.icon
             const isActive = activeId === section.id
@@ -223,5 +230,6 @@ export function SettingsPageClient({ notificationSettings }: SettingsPageClientP
         </section>
       </div>
     </div>
+  </div>
   )
 }

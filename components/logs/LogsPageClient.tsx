@@ -1,11 +1,12 @@
 'use client'
 
 import { format } from 'date-fns'
-import { ClipboardList, RefreshCw } from 'lucide-react'
+import { ClipboardList, RefreshCw, Search } from 'lucide-react'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { EmptyState } from '@/components/common/EmptyState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { MobilePagination } from '@/components/common/MobilePagination'
 import { ActivityLogDetailDialog } from '@/components/logs/ActivityLogDetailDialog'
 import { Badge } from '@/components/ui/badge'
@@ -166,68 +167,89 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
 
   return (
     <TooltipProvider>
-      <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-6 md:h-[calc(100dvh-3.5rem-3rem)]">
-        <Card className="gap-3 py-4">
+      <div className="flex h-[calc(100dvh-3.5rem-2rem)] flex-col gap-4 md:gap-5 md:h-[calc(100dvh-3.5rem-3rem)]">
+        <PageHeader
+          title="操作日志"
+          description="记录管理员敏感行为、登录活动与核心资源变更审计追踪"
+        />
+
+        <Card className="gap-3 py-3">
           <CardContent className="flex flex-col gap-3 px-4 sm:px-6">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            <span>总日志 {summary.total}</span>
-            <span>今日 {summary.today}</span>
-            <span>登录 {summary.auth}</span>
-            <span>变更 {summary.changes}</span>
-          </div>
-
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Input
-                className="max-w-sm"
-                placeholder="搜索摘要 / 资源名 / IP"
-                value={keywordInput}
-                onChange={(event) => setKeywordInput(event.target.value)}
-              />
-              <Select value={initialFilters.category} onValueChange={(value) => updateSearchParams({ ...initialFilters, category: value as ActivityLogFilters['category'] })}>
-                <SelectTrigger className="w-[10rem]">
-                  <SelectValue placeholder="全部类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部类型</SelectItem>
-                  <SelectItem value="auth">登录</SelectItem>
-                  <SelectItem value="domain">域名</SelectItem>
-                  <SelectItem value="site">站点</SelectItem>
-                  <SelectItem value="account">账号</SelectItem>
-                  <SelectItem value="settings">设置</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={initialFilters.timeRange} onValueChange={(value) => updateSearchParams({ ...initialFilters, timeRange: value as ActivityLogFilters['timeRange'] })}>
-                <SelectTrigger className="w-[10rem]">
-                  <SelectValue placeholder="时间范围" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(ACTIVITY_LOG_TIME_RANGE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-1 text-xs">
+                <span className="text-muted-foreground">总日志</span>
+                <span className="font-semibold text-foreground tabular-nums">{summary.total}</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-1 text-xs">
+                <span className="text-muted-foreground">今日</span>
+                <span className="font-semibold text-foreground tabular-nums">{summary.today}</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-1 text-xs">
+                <span className="text-muted-foreground">登录</span>
+                <span className="font-semibold text-foreground tabular-nums">{summary.auth}</span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-lg border bg-muted/40 px-2.5 py-1 text-xs">
+                <span className="text-muted-foreground">变更</span>
+                <span className="font-semibold text-foreground tabular-nums">{summary.changes}</span>
+              </div>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering} aria-label="刷新">
-                  <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>刷新</TooltipContent>
-            </Tooltip>
-          </div>
-        </CardContent>
-      </Card>
 
-      <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
-        {paginatedLogs.items.length === 0 ? (
-          <EmptyState
-            title="暂无操作日志"
-            description="当前筛选条件下还没有可展示的日志记录。"
-            fillHeight
-          />
-        ) : (
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <label className="relative w-full max-w-sm min-w-0">
+                  <Search size={15} className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none" />
+                  <Input
+                    className="pl-9"
+                    placeholder="搜索摘要 / 资源名 / IP"
+                    value={keywordInput}
+                    onChange={(event) => setKeywordInput(event.target.value)}
+                  />
+                </label>
+                <Select value={initialFilters.category} onValueChange={(value) => updateSearchParams({ ...initialFilters, category: value as ActivityLogFilters['category'] })}>
+                  <SelectTrigger className="w-[10rem]">
+                    <SelectValue placeholder="全部类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部类型</SelectItem>
+                    <SelectItem value="auth">登录</SelectItem>
+                    <SelectItem value="domain">域名</SelectItem>
+                    <SelectItem value="site">站点</SelectItem>
+                    <SelectItem value="account">账号</SelectItem>
+                    <SelectItem value="settings">设置</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={initialFilters.timeRange} onValueChange={(value) => updateSearchParams({ ...initialFilters, timeRange: value as ActivityLogFilters['timeRange'] })}>
+                  <SelectTrigger className="w-[10rem]">
+                    <SelectValue placeholder="时间范围" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ACTIVITY_LOG_TIME_RANGE_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="secondary" size="icon" onClick={refresh} disabled={spinning || isFiltering} aria-label="刷新">
+                    <RefreshCw size={16} className={spinning || isFiltering ? 'animate-spin' : ''} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>刷新</TooltipContent>
+              </Tooltip>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className={cn('hidden min-h-0 flex-1 transition-opacity md:flex md:flex-col', isFiltering && 'pointer-events-none opacity-60')}>
+          {paginatedLogs.items.length === 0 ? (
+            <EmptyState
+              icon={<ClipboardList className="size-6 text-muted-foreground/60" />}
+              title="暂无操作日志"
+              description="当前筛选条件下还没有可展示的日志记录。"
+              fillHeight
+            />
+          ) : (
           <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden p-0">
             <div className="min-h-0 flex-1 [&>[data-slot=table-container]]:h-full [&>[data-slot=table-container]]:min-h-0 [&>[data-slot=table-container]]:overflow-auto">
               <Table>
@@ -288,6 +310,7 @@ export function LogsPageClient({ initialFilters, paginatedLogs, summary }: LogsP
         <div className={cn('flex min-h-0 flex-1 flex-col transition-opacity md:hidden', isFiltering && 'pointer-events-none opacity-60')}>
           {paginatedLogs.items.length === 0 ? (
             <EmptyState
+              icon={<ClipboardList className="size-6 text-muted-foreground/60" />}
               title="暂无操作日志"
               description="当前筛选条件下还没有可展示的日志记录。"
               fillHeight
