@@ -1,4 +1,5 @@
 import { LogsPageClient } from '@/components/logs/LogsPageClient'
+import { DataBoundary } from '@/components/common/DataSourceError'
 import { requirePageAccess } from '@/lib/auth/access-server'
 import { getActivityLogs, getActivityLogSummary, getDefaultActivityLogFilters } from '@/lib/data/activity-logs'
 import { getSingleParam } from '@/lib/utils/params'
@@ -20,16 +21,26 @@ export default async function LogsPage({ searchParams }: { searchParams?: Promis
   }
   const page = Math.max(1, Number.parseInt(getSingleParam(params?.page) ?? '1', 10) || 1)
 
-  const [result, summary] = await Promise.all([
-    getActivityLogs({
-      ...filters,
-      page,
-      pageSize: isStandardPageSize(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
-    }),
-    getActivityLogSummary(),
-  ])
+  const load = async () => {
+    const [result, summary] = await Promise.all([
+      getActivityLogs({
+        ...filters,
+        page,
+        pageSize: isStandardPageSize(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
+      }),
+      getActivityLogSummary(),
+    ])
 
-  return <LogsPageClient initialFilters={filters} paginatedLogs={result} summary={summary} />
+    return { result, summary }
+  }
+
+  return (
+    <DataBoundary load={load}>
+      {({ result, summary }) => (
+        <LogsPageClient initialFilters={filters} paginatedLogs={result} summary={summary} />
+      )}
+    </DataBoundary>
+  )
 }
 
 function isActivityLogCategoryValue(value?: string): value is ActivityLogFilters['category'] {
@@ -39,4 +50,3 @@ function isActivityLogCategoryValue(value?: string): value is ActivityLogFilters
 function isTimeRangeValue(value?: string): value is ActivityLogTimeRange {
   return ACTIVITY_LOG_TIME_RANGES.includes(value as ActivityLogTimeRange)
 }
-

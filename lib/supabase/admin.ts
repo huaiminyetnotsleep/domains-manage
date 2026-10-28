@@ -9,7 +9,7 @@ export function createSupabaseAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
-    throw new Error('缺少服务端 Supabase 管理员环境变量。')
+    throw new Error('缺少 SUPABASE_SERVICE_ROLE_KEY 环境变量（Supabase 服务端管理客户端无法创建）。')
   }
 
   adminClient = createClient(url, key)

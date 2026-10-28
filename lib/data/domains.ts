@@ -10,14 +10,14 @@ import { getDomainStatus } from '@/lib/domainStatus'
 import { mapDomain, normalizeDomainName } from '@/lib/mappers/domain'
 import { mockDomains } from '@/lib/mock/domains'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
-import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { requireSupabaseConfigured, toSupabaseDataError } from '@/lib/supabase/data-error'
 import type { Domain, DomainFormValues, DomainListQuery, DomainRow, PaginatedDomains, SubdomainFormValues } from '@/types/domain'
 
 export async function getDomains(query: DomainListQuery, expiryDays?: number): Promise<PaginatedDomains> {
   const resolvedExpiryDays = expiryDays ?? (await getNotificationRuleSettings()).expiryDays
   const threshold = format(dfnsAddDays(new Date(), resolvedExpiryDays), 'yyyy-MM-dd')
 
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return paginateDomains(sortDomains(filterMockDomains(query, resolvedExpiryDays), query), query)
   }
 
@@ -113,8 +113,7 @@ export async function getDomains(query: DomainListQuery, expiryDays?: number): P
 
     return paginateDomains(sortDomains((data ?? []).map((row) => mapDomain(row as DomainRow)), query), query)
   } catch (error) {
-    console.error('Failed to load domains from Supabase, using mock data instead.', error)
-    return paginateDomains(sortDomains(filterMockDomains(query, resolvedExpiryDays), query), query)
+    throw toSupabaseDataError('域名列表', error)
   }
 }
 
@@ -132,11 +131,15 @@ const readAllDomainNamesCached = unstable_cache(
 )
 
 const readAllDomainNames = cache(async (): Promise<string[]> => {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockDomains.map((domain) => domain.name)
   }
 
-  return readAllDomainNamesCached()
+  try {
+    return await readAllDomainNamesCached()
+  } catch (error) {
+    throw toSupabaseDataError('域名后缀选项', error)
+  }
 })
 
 export async function listAllDomainNames(): Promise<string[]> {
@@ -144,37 +147,49 @@ export async function listAllDomainNames(): Promise<string[]> {
 }
 
 export async function listAllDomains(): Promise<Domain[]> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockDomains
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase.from('domains').select('*, subdomains(*)')
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase.from('domains').select('*, subdomains(*)')
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => mapDomain(row as DomainRow))
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row) => mapDomain(row as DomainRow))
+  } catch (error) {
+    throw toSupabaseDataError('域名列表', error)
+  }
 }
 
 export async function listAllDomainsForDashboard(): Promise<Domain[]> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockDomains
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase
-    .from('domains')
-    .select('id, name, registrar_account_id, registrar_site_id, registration_date, expiry_date, dns_account_id, dns_site_id, renewal_days_before_expiry, is_free, currency, purchase_price, renewal_price, auto_renewal, remark, created_at, updated_at')
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from('domains')
+      .select('id, name, registrar_account_id, registrar_site_id, registration_date, expiry_date, dns_account_id, dns_site_id, renewal_days_before_expiry, is_free, currency, purchase_price, renewal_price, auto_renewal, remark, created_at, updated_at')
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => mapDomain({ ...(row as DomainRow), subdomains: [] }))
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row) => mapDomain({ ...(row as DomainRow), subdomains: [] }))
+  } catch (error) {
+    throw toSupabaseDataError('仪表盘域名数据', error)
+  }
 }
 
 export async function getDomainById(id: string): Promise<Domain | null> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockDomains.find((domain) => domain.id === id) ?? null
   }
 
-  return getDomainByIdWithClient(createSupabaseAdminClient(), id)
+  try {
+    return await getDomainByIdWithClient(createSupabaseAdminClient(), id)
+  } catch (error) {
+    throw toSupabaseDataError('域名详情', error)
+  }
 }
 
 export async function createDomain(values: DomainFormValues) {
@@ -205,18 +220,22 @@ export async function deleteDomains(ids: string[]) {
 export async function getDomainsByIds(ids: string[]) {
   if (ids.length === 0) return []
 
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockDomains.filter((domain) => ids.includes(domain.id))
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase
-    .from('domains')
-    .select('*, subdomains(*)')
-    .in('id', ids)
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from('domains')
+      .select('*, subdomains(*)')
+      .in('id', ids)
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => mapDomain(row as DomainRow))
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row) => mapDomain(row as DomainRow))
+  } catch (error) {
+    throw toSupabaseDataError('域名列表', error)
+  }
 }
 
 export type ExpiringDomainNotificationRow = {

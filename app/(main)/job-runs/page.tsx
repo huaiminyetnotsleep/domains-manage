@@ -1,4 +1,5 @@
 import { JobRunsPageClient } from '@/components/job-runs/JobRunsPageClient'
+import { DataBoundary } from '@/components/common/DataSourceError'
 import { requirePageAccess } from '@/lib/auth/access-server'
 import { getJobRuns, getJobRunSummary } from '@/lib/data/job-runs'
 import { getSingleParam } from '@/lib/utils/params'
@@ -11,14 +12,23 @@ export default async function JobRunsPage({ searchParams }: { searchParams?: Pro
   const pageSize = Number.parseInt(rawPageSize ?? String(DEFAULT_PAGE_SIZE), 10)
   const page = Math.max(1, Number.parseInt(getSingleParam(params?.page) ?? '1', 10) || 1)
 
-  const [paginatedRuns, summary] = await Promise.all([
-    getJobRuns({
-      page,
-      pageSize: isStandardPageSize(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
-    }),
-    getJobRunSummary(),
-  ])
+  const load = async () => {
+    const [paginatedRuns, summary] = await Promise.all([
+      getJobRuns({
+        page,
+        pageSize: isStandardPageSize(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
+      }),
+      getJobRunSummary(),
+    ])
 
-  return <JobRunsPageClient paginatedRuns={paginatedRuns} summary={summary} />
+    return { paginatedRuns, summary }
+  }
+
+  return (
+    <DataBoundary load={load}>
+      {({ paginatedRuns, summary }) => (
+        <JobRunsPageClient paginatedRuns={paginatedRuns} summary={summary} />
+      )}
+    </DataBoundary>
+  )
 }
-

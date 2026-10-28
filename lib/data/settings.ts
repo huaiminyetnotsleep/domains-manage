@@ -30,6 +30,7 @@ import {
 } from '@/lib/notifications/settings'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { requireSupabaseConfigured, toSupabaseDataError } from '@/lib/supabase/data-error'
 import type { NotificationTypeKey } from '@/types/notification'
 
 export const SETTINGS_KEYS = {
@@ -178,14 +179,14 @@ const getNotificationRuleSettingsCached = unstable_cache(
 )
 
 export async function getNotificationRuleSettings(): Promise<NotificationRuleSettings> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return DEFAULT_NOTIFICATION_RULE_SETTINGS
   }
 
   try {
     return await getNotificationRuleSettingsCached()
-  } catch {
-    return DEFAULT_NOTIFICATION_RULE_SETTINGS
+  } catch (error) {
+    throw toSupabaseDataError('通知规则', error)
   }
 }
 
@@ -225,7 +226,7 @@ export async function saveNotificationRuleSettings(config: NotificationRuleSetti
 }
 
 export async function getEmailProviderSettings(): Promise<EmailProviderSettings> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return { ...DEFAULT_EMAIL_PROVIDER_SETTINGS }
   }
 
@@ -246,8 +247,8 @@ export async function getEmailProviderSettings(): Promise<EmailProviderSettings>
       enabled: endpoint?.enabled ?? DEFAULT_EMAIL_PROVIDER_SETTINGS.enabled,
       lastVerifiedAt: endpoint?.lastVerifiedAt ?? '',
     }
-  } catch {
-    return { ...DEFAULT_EMAIL_PROVIDER_SETTINGS }
+  } catch (error) {
+    throw toSupabaseDataError('邮件通知配置', error)
   }
 }
 
@@ -284,7 +285,7 @@ export async function saveEmailProviderSettings(config: {
 }
 
 export async function getTelegramProviderSettings(): Promise<TelegramProviderSettings> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return { ...DEFAULT_TELEGRAM_PROVIDER_SETTINGS }
   }
 
@@ -298,8 +299,8 @@ export async function getTelegramProviderSettings(): Promise<TelegramProviderSet
       enabled: endpoint?.enabled ?? DEFAULT_TELEGRAM_PROVIDER_SETTINGS.enabled,
       lastVerifiedAt: endpoint?.lastVerifiedAt ?? '',
     }
-  } catch {
-    return { ...DEFAULT_TELEGRAM_PROVIDER_SETTINGS }
+  } catch (error) {
+    throw toSupabaseDataError('Telegram 通知配置', error)
   }
 }
 
@@ -322,7 +323,7 @@ export async function saveTelegramProviderSettings(config: {
 }
 
 export async function getWebhookProviderSettings(): Promise<WebhookProviderSettings> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return { ...DEFAULT_WEBHOOK_PROVIDER_SETTINGS }
   }
 
@@ -339,8 +340,8 @@ export async function getWebhookProviderSettings(): Promise<WebhookProviderSetti
       enabled: endpoint?.enabled ?? DEFAULT_WEBHOOK_PROVIDER_SETTINGS.enabled,
       lastVerifiedAt: endpoint?.lastVerifiedAt ?? '',
     }
-  } catch {
-    return { ...DEFAULT_WEBHOOK_PROVIDER_SETTINGS }
+  } catch (error) {
+    throw toSupabaseDataError('Webhook 通知配置', error)
   }
 }
 

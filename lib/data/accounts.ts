@@ -4,7 +4,7 @@ import { mapAccount, normalizeAccountIdentifier, normalizeAccountSites } from '@
 import { mockAccounts } from '@/lib/mock/accounts'
 import { mockSites } from '@/lib/mock/sites'
 import { isEmail } from '@/schemas/accountSchemas'
-import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { requireSupabaseConfigured, toSupabaseDataError } from '@/lib/supabase/data-error'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { formatISO } from 'date-fns'
 import type { Account, AccountFormValues, AccountListQuery, AccountRow, PaginatedAccounts, SiteEntry } from '@/types/account'
@@ -42,7 +42,7 @@ export function resolveAccountDisplay(accountId: string | null, lookup: AccountL
 }
 
 export async function getActiveAccounts() {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockAccounts.filter((account) => account.isActive)
   }
 
@@ -57,8 +57,7 @@ export async function getActiveAccounts() {
     if (error) throw new Error(error.message)
     return (data ?? []).map((row) => mapAccount(row as AccountRow))
   } catch (error) {
-    console.error('Failed to load active accounts from Supabase, using mock data.', error)
-    return mockAccounts.filter((account) => account.isActive)
+    throw toSupabaseDataError('账号列表', error)
   }
 }
 
@@ -79,15 +78,14 @@ const getAllAccountsCached = unstable_cache(
 )
 
 export async function getAllAccounts() {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockAccounts
   }
 
   try {
     return await getAllAccountsCached()
   } catch (error) {
-    console.error('Failed to load accounts from Supabase, using mock data.', error)
-    return mockAccounts
+    throw toSupabaseDataError('账号列表', error)
   }
 }
 
@@ -97,7 +95,7 @@ export async function getAccountsByIds(ids: string[]) {
     return []
   }
 
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockAccounts.filter((account) => uniqueIds.includes(account.id))
   }
 
@@ -111,13 +109,12 @@ export async function getAccountsByIds(ids: string[]) {
     if (error) throw new Error(error.message)
     return (data ?? []).map((row) => mapAccount(row as AccountRow))
   } catch (error) {
-    console.error('Failed to load accounts by ids from Supabase, using mock data.', error)
-    return mockAccounts.filter((account) => uniqueIds.includes(account.id))
+    throw toSupabaseDataError('账号列表', error)
   }
 }
 
 export async function getAccounts(query: AccountListQuery): Promise<PaginatedAccounts> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return paginateAccounts(filterMockAccounts(query), query)
   }
 
@@ -163,13 +160,12 @@ export async function getAccounts(query: AccountListQuery): Promise<PaginatedAcc
       totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
     }
   } catch (error) {
-    console.error('Failed to load accounts from Supabase, using mock data.', error)
-    return paginateAccounts(filterMockAccounts(query), query)
+    throw toSupabaseDataError('账号列表', error)
   }
 }
 
 export async function getAccountById(id: string): Promise<Account | null> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockAccounts.find((account) => account.id === id) ?? null
   }
 
@@ -186,8 +182,7 @@ export async function getAccountById(id: string): Promise<Account | null> {
 
     return mapAccount(data as AccountRow)
   } catch (error) {
-    console.error('Failed to load account from Supabase, using mock data.', error)
-    return mockAccounts.find((account) => account.id === id) ?? null
+    throw toSupabaseDataError('账号详情', error)
   }
 }
 
@@ -392,15 +387,14 @@ export async function getUsedSites(): Promise<UsedSite[]> {
     return [...new Set(accounts.flatMap((a) => a.sites.map((e) => e.site)))].sort().map((id) => ({ id, name: siteNamesById.get(id) ?? id }))
   }
 
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return extract(mockAccounts)
   }
 
   try {
     return await getUsedSitesCached()
   } catch (error) {
-    console.error('Failed to load sites from Supabase, using mock data.', error)
-    return extract(mockAccounts)
+    throw toSupabaseDataError('已用站点', error)
   }
 }
 

@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache'
 
 import { mapSite } from '@/lib/mappers/site'
 import { mockSites } from '@/lib/mock/sites'
-import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { requireSupabaseConfigured, toSupabaseDataError } from '@/lib/supabase/data-error'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { Site, SiteFormValues, SiteListQuery, SiteRow, PaginatedSites, FavoriteSite } from '@/types/site'
 
@@ -24,20 +24,19 @@ const getActiveSitesCached = unstable_cache(
 )
 
 export async function getActiveSites(): Promise<Site[]> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockSites.filter((s) => s.isActive)
   }
 
   try {
     return await getActiveSitesCached()
   } catch (error) {
-    console.error('Failed to load sites from Supabase, using mock data.', error)
-    return mockSites.filter((s) => s.isActive)
+    throw toSupabaseDataError('站点列表', error)
   }
 }
 
 export async function getSites(query: SiteListQuery): Promise<PaginatedSites> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return paginateSites(filterMockSites(query), query)
   }
 
@@ -80,8 +79,7 @@ export async function getSites(query: SiteListQuery): Promise<PaginatedSites> {
       totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
     }
   } catch (error) {
-    console.error('Failed to load sites from Supabase, using mock data.', error)
-    return paginateSites(filterMockSites(query), query)
+    throw toSupabaseDataError('站点列表', error)
   }
 }
 
@@ -101,15 +99,14 @@ const getAllSitesCached = unstable_cache(
 )
 
 export async function getAllSites(): Promise<Site[]> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockSites
   }
 
   try {
     return await getAllSitesCached()
   } catch (error) {
-    console.error('Failed to load sites from Supabase, using mock data.', error)
-    return mockSites
+    throw toSupabaseDataError('站点列表', error)
   }
 }
 
@@ -119,7 +116,7 @@ export async function getSitesByIds(ids: string[]): Promise<Site[]> {
     return []
   }
 
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockSites.filter((site) => uniqueIds.includes(site.id))
   }
 
@@ -133,27 +130,30 @@ export async function getSitesByIds(ids: string[]): Promise<Site[]> {
     if (error) throw new Error(error.message)
     return (data ?? []).map((row) => mapSite(row as SiteRow))
   } catch (error) {
-    console.error('Failed to load sites by ids from Supabase, using mock data.', error)
-    return mockSites.filter((site) => uniqueIds.includes(site.id))
+    throw toSupabaseDataError('站点列表', error)
   }
 }
 
 export async function getSiteById(id: string): Promise<Site | null> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return mockSites.find((s) => s.id === id) ?? null
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase
-    .from('sites')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
 
-  if (error) throw new Error(error.message)
-  if (!data) return null
+    if (error) throw new Error(error.message)
+    if (!data) return null
 
-  return mapSite(data as SiteRow)
+    return mapSite(data as SiteRow)
+  } catch (error) {
+    throw toSupabaseDataError('站点详情', error)
+  }
 }
 
 export async function createSite(values: SiteFormValues): Promise<Site> {
@@ -235,21 +235,25 @@ function paginateSites(sites: Site[], query: SiteListQuery): PaginatedSites {
 }
 
 export async function getFavoriteSites(): Promise<FavoriteSite[]> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return []
   }
 
-  const supabase = createSupabaseAdminClient()
-  const { data, error } = await supabase
-    .from('favorite_sites')
-    .select('site_id, position')
-    .order('position', { ascending: true })
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { data, error } = await supabase
+      .from('favorite_sites')
+      .select('site_id, position')
+      .order('position', { ascending: true })
 
-  if (error) throw new Error(error.message)
-  return (data ?? []).map((row) => ({
-    siteId: row.site_id,
-    position: row.position,
-  }))
+    if (error) throw new Error(error.message)
+    return (data ?? []).map((row) => ({
+      siteId: row.site_id,
+      position: row.position,
+    }))
+  } catch (error) {
+    throw toSupabaseDataError('收藏站点', error)
+  }
 }
 
 export async function addFavoriteSite(siteId: string): Promise<void> {

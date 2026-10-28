@@ -6,6 +6,7 @@ import { mapActivityLog } from '@/lib/mappers/activity-log'
 import { mockActivityLogs } from '@/lib/mock/activity-logs'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { requireSupabaseConfigured, toSupabaseDataError } from '@/lib/supabase/data-error'
 import type {
   ActivityLogAction,
   ActivityLogCategory,
@@ -88,7 +89,7 @@ export async function logActivity(input: ActivityLogInput): Promise<{ id: string
 }
 
 export async function getActivityLogs(query: ActivityLogListQuery): Promise<PaginatedActivityLogs> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return emptyPaginatedLogs(query)
   }
 
@@ -152,7 +153,15 @@ export async function getActivityLogs(query: ActivityLogListQuery): Promise<Pagi
     })
     const total = count ?? 0
 
-    if (total === 0) return emptyPaginatedLogs(query)
+    if (total === 0) {
+      return {
+        items: [],
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+        totalPages: 1,
+      }
+    }
 
     return {
       items,
@@ -162,8 +171,7 @@ export async function getActivityLogs(query: ActivityLogListQuery): Promise<Pagi
       totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
     }
   } catch (error) {
-    console.error('Failed to load activity logs, using mock data instead.', error)
-    return emptyPaginatedLogs(query)
+    throw toSupabaseDataError('操作日志', error)
   }
 }
 
@@ -173,7 +181,7 @@ export async function getActivityLogSummary(): Promise<{
   auth: number
   changes: number
 }> {
-  if (!isSupabaseConfigured()) {
+  if (!requireSupabaseConfigured()) {
     return getMockActivityLogSummary()
   }
 
@@ -192,18 +200,14 @@ export async function getActivityLogSummary(): Promise<{
     if (authResult.error) throw new Error(authResult.error.message)
     if (changesResult.error) throw new Error(changesResult.error.message)
 
-    const total = totalResult.count ?? 0
-    if (total === 0) return getMockActivityLogSummary()
-
     return {
-      total,
+      total: totalResult.count ?? 0,
       today: todayResult.count ?? 0,
       auth: authResult.count ?? 0,
       changes: changesResult.count ?? 0,
     }
   } catch (error) {
-    console.error('Failed to load activity log summary, using mock data.', error)
-    return getMockActivityLogSummary()
+    throw toSupabaseDataError('操作日志统计', error)
   }
 }
 

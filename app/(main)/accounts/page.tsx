@@ -1,4 +1,5 @@
 import { AccountsPageClient } from '@/components/accounts/AccountsPageClient'
+import { DataBoundary } from '@/components/common/DataSourceError'
 import { getAccounts, getUsedSites, getAllAccounts } from '@/lib/data/accounts'
 import { getActiveSites } from '@/lib/data/sites'
 import { getSingleParam } from '@/lib/utils/params'
@@ -31,20 +32,34 @@ export default async function AccountsPage({ searchParams }: { searchParams?: Pr
   }
   const page = Math.max(1, Number.parseInt(getSingleParam(params?.page) ?? '1', 10) || 1)
 
-  const [result, usedSites, activeSites, allAccounts] = await Promise.all([
-    getAccounts({
-      ...filters,
-      page,
-      pageSize: isPageSizeValue(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
-    }),
-    getUsedSites(),
-    getActiveSites(),
-    getAllAccounts(),
-  ])
+  const load = async () => {
+    const [result, usedSites, activeSites, allAccounts] = await Promise.all([
+      getAccounts({
+        ...filters,
+        page,
+        pageSize: isPageSizeValue(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
+      }),
+      getUsedSites(),
+      getActiveSites(),
+      getAllAccounts(),
+    ])
 
-  const emailIdentifiers = allAccounts.filter((a) => isEmail(a.identifier)).map((a) => a.identifier)
+    return { result, usedSites, activeSites, allAccounts }
+  }
 
-  return <AccountsPageClient initialFilters={filters} paginatedAccounts={result} usedSites={usedSites} sites={activeSites} emailIdentifiers={emailIdentifiers} />
+  return (
+    <DataBoundary load={load}>
+      {({ result, usedSites, activeSites, allAccounts }) => (
+        <AccountsPageClient
+          initialFilters={filters}
+          paginatedAccounts={result}
+          usedSites={usedSites}
+          sites={activeSites}
+          emailIdentifiers={allAccounts.filter((a) => isEmail(a.identifier)).map((a) => a.identifier)}
+        />
+      )}
+    </DataBoundary>
+  )
 }
 
 function isEmailProviderValue(value?: string): value is EmailProvider {

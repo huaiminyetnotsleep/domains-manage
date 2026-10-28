@@ -1,4 +1,5 @@
 import { DomainsPageClient } from '@/components/domains/DomainsPageClient'
+import { DataBoundary } from '@/components/common/DataSourceError'
 import { buildAccountLookup, getAllAccounts } from '@/lib/data/accounts'
 import { getDomains, listAllDomainNames } from '@/lib/data/domains'
 import { collectDomainSuffixOptions } from '@/lib/domainSuffix'
@@ -40,27 +41,44 @@ export default async function DomainsPage({ searchParams }: { searchParams?: Pro
   }
   const page = Math.max(1, Number.parseInt(getSingleParam(params?.page) ?? '1', 10) || 1)
 
-  const rulesPromise = getNotificationRuleSettings()
-  const sitesPromise = getActiveSites()
-  const linkSitesPromise = getAllSites()
-  const accountsPromise = getAllAccounts()
-  const suffixOptionsPromise = listAllDomainNames().then((domainNames) => collectDomainSuffixOptions(domainNames))
-  const rules = await rulesPromise
-  const [result, sites, linkSites, accounts, suffixOptions] = await Promise.all([
-    getDomains({
-      ...filters,
-      page,
-      pageSize: isPageSizeValue(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
-    }, rules.expiryDays),
-    sitesPromise,
-    linkSitesPromise,
-    accountsPromise,
-    suffixOptionsPromise,
-  ])
+  const load = async () => {
+    const rulesPromise = getNotificationRuleSettings()
+    const sitesPromise = getActiveSites()
+    const linkSitesPromise = getAllSites()
+    const accountsPromise = getAllAccounts()
+    const suffixOptionsPromise = listAllDomainNames().then((domainNames) => collectDomainSuffixOptions(domainNames))
+    const rules = await rulesPromise
+    const [result, sites, linkSites, accounts, suffixOptions] = await Promise.all([
+      getDomains({
+        ...filters,
+        page,
+        pageSize: isPageSizeValue(pageSize) ? pageSize : DEFAULT_PAGE_SIZE,
+      }, rules.expiryDays),
+      sitesPromise,
+      linkSitesPromise,
+      accountsPromise,
+      suffixOptionsPromise,
+    ])
 
-  const accountLookup = buildAccountLookup(accounts)
+    return { result, sites, linkSites, accounts, suffixOptions, expiryDays: rules.expiryDays }
+  }
 
-  return <DomainsPageClient initialFilters={filters} paginatedDomains={result} sites={sites} linkSites={linkSites} accounts={accounts} accountLookup={accountLookup} expiryDays={rules.expiryDays} suffixOptions={suffixOptions} />
+  return (
+    <DataBoundary load={load}>
+      {({ result, sites, linkSites, accounts, suffixOptions, expiryDays }) => (
+        <DomainsPageClient
+          initialFilters={filters}
+          paginatedDomains={result}
+          sites={sites}
+          linkSites={linkSites}
+          accounts={accounts}
+          accountLookup={buildAccountLookup(accounts)}
+          expiryDays={expiryDays}
+          suffixOptions={suffixOptions}
+        />
+      )}
+    </DataBoundary>
+  )
 }
 
 function isStatusValue(value?: string): value is DomainFilters['status'] {

@@ -6,6 +6,7 @@ import { getStartOfToday } from '@/lib/date'
 import { mockJobRuns } from '@/lib/mock/job-runs'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { requireSupabaseConfigured, toSupabaseDataError } from '@/lib/supabase/data-error'
 import {
   JOB_RUN_STATUSES,
   JOB_TRIGGER_SOURCES,
@@ -79,7 +80,7 @@ export async function updateJobRun(input: {
 }
 
 export async function getJobRuns(query: JobRunListQuery): Promise<PaginatedJobRuns> {
-  if (!canAccessJobRuns()) {
+  if (!requireSupabaseConfigured()) {
     return emptyPaginatedJobRuns(query)
   }
 
@@ -100,7 +101,15 @@ export async function getJobRuns(query: JobRunListQuery): Promise<PaginatedJobRu
 
     const total = count ?? 0
 
-    if (total === 0) return emptyPaginatedJobRuns(query)
+    if (total === 0) {
+      return {
+        items: [],
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+        totalPages: 1,
+      }
+    }
 
     return {
       items: (data ?? []).map((row) => mapJobRun(row as JobRunRow)),
@@ -110,13 +119,12 @@ export async function getJobRuns(query: JobRunListQuery): Promise<PaginatedJobRu
       totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
     }
   } catch (error) {
-    console.error('Failed to load job runs, using mock data instead.', error)
-    return emptyPaginatedJobRuns(query)
+    throw toSupabaseDataError('任务运行记录', error)
   }
 }
 
 export async function getJobRunSummary(): Promise<JobRunSummary> {
-  if (!canAccessJobRuns()) {
+  if (!requireSupabaseConfigured()) {
     return getMockJobRunSummary()
   }
 
@@ -135,18 +143,14 @@ export async function getJobRunSummary(): Promise<JobRunSummary> {
     if (successResult.error) throw new Error(successResult.error.message)
     if (failedResult.error) throw new Error(failedResult.error.message)
 
-    const total = totalResult.count ?? 0
-    if (total === 0) return getMockJobRunSummary()
-
     return {
-      total,
+      total: totalResult.count ?? 0,
       today: todayResult.count ?? 0,
       success: successResult.count ?? 0,
       failed: failedResult.count ?? 0,
     }
   } catch (error) {
-    console.error('Failed to load job run summary, using mock data instead.', error)
-    return getMockJobRunSummary()
+    throw toSupabaseDataError('任务运行统计', error)
   }
 }
 
